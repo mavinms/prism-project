@@ -9,45 +9,204 @@
 
     <!-- Small inline styles for the developer photos (keeps change local to this file; optional to move into style.css) -->
     <style>
-      /* vertical developer thumbnails in the left sidebar footer */
+      /* Vertical developer thumbnails in the left sidebar footer */
       .dev-photos {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        margin-top: 10px;
+        gap: 12px;
+        margin-top: 6px;
         align-items: center;
-        padding-top: 8px;
+        padding: 6px 8px 8px 8px;
         border-top: 1px dashed rgba(0,0,0,0.04);
       }
-      .dev-photos img {
-        width: 60px;           /* small square thumbnail */
-        height: 60px;
-        object-fit: cover;
+      
+      .dev-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 4px;
         border-radius: 8px;
-        border: 1px solid rgba(0,0,0,0.06);
-        box-shadow: 0 6px 14px rgba(2,6,23,0.06);
-        display: block;
       }
+      
+      .dev-item:hover {
+        transform: translateY(-2px);
+        background: rgba(99, 102, 241, 0.05);
+      }
+      
+      .dev-photos img {
+        width: 90px;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid rgba(99, 102, 241, 0.5);
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+        display: block;
+        transition: all 0.3s ease;
+        animation: float 3s ease-in-out infinite;
+      }
+      
+      .dev-item:nth-child(2) img {
+        animation-delay: 0.5s;
+        border-color: rgba(168, 85, 247, 0.5);
+      }
+      
+      .dev-item:hover img {
+        transform: scale(1.08) rotate(3deg);
+        box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
+        border-width: 4px;
+      }
+      
+      @keyframes float {
+        0%, 100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+      
       .dev-photos .dev-caption {
-        font-size: 11px;
-        color: #444;
+        font-size: 12px;
+        font-weight: 700;
+        color: #4f46e5;
         text-align: center;
-        line-height: 1.1;
+        line-height: 1.3;
+        transition: all 0.3s ease;
+        margin-top: 2px;
+        text-shadow: 0 0 1px rgba(79, 70, 229, 0.3);
+      }
+      
+      .dev-item:hover .dev-caption {
+        color: #7c3aed;
+        transform: scale(1.08);
+        text-shadow: 0 0 2px rgba(124, 58, 237, 0.5);
+      }
+      
+      /* Compact sidebar elements to avoid scrollbar */
+      .sidebar {
+        padding: 12px 10px 8px 10px !important;
+        gap: 6px !important;
+      }
+      
+      .brand {
+        padding: 6px !important;
+        margin-bottom: 4px !important;
+      }
+      
+      .brand h1 {
+        font-size: 20px !important;
+        margin-bottom: 2px !important;
+      }
+      
+      .brand-tagline {
+        font-size: 8.5px !important;
+        line-height: 1.2 !important;
+      }
+      
+      .brand-icon {
+        font-size: 28px !important;
+      }
+      
+      .live-clock {
+        padding: 5px !important;
+        font-size: 10px !important;
+        margin-bottom: 5px !important;
+      }
+      
+      .quick-stats {
+        gap: 5px !important;
+        margin-bottom: 6px !important;
+      }
+      
+      .stat-mini {
+        padding: 5px !important;
+      }
+      
+      .stat-icon {
+        font-size: 16px !important;
+      }
+      
+      .stat-value {
+        font-size: 14px !important;
+      }
+      
+      .stat-label {
+        font-size: 8.5px !important;
+      }
+      
+      .main-nav {
+        gap: 2px !important;
+        margin-bottom: 6px !important;
+      }
+      
+      .nav-btn {
+        padding: 5px 8px !important;
+        font-size: 11.5px !important;
+        min-height: 34px !important;
+      }
+      
+      .nav-icon {
+        font-size: 14px !important;
+      }
+      
+      .quick-access {
+        padding: 6px !important;
+        margin-bottom: 6px !important;
+      }
+      
+      .quick-access-header {
+        font-size: 10px !important;
+        padding: 3px 0 !important;
+        margin-bottom: 3px !important;
+      }
+      
+      .quick-access-btn {
+        padding: 4px 7px !important;
+        font-size: 10.5px !important;
+        min-height: 28px !important;
+        margin-bottom: 2px !important;
+      }
+      
+      .quick-icon {
+        font-size: 12px !important;
+      }
+      
+      .quick-count {
+        font-size: 9px !important;
+        min-width: 18px !important;
+        height: 18px !important;
+        line-height: 18px !important;
+      }
+      
+      .quick-divider {
+        font-size: 9px !important;
+        padding: 3px 0 2px !important;
+        margin: 3px 0 !important;
+      }
+      
+      .sidebar-footer {
+        margin-top: 6px !important;
+        padding-top: 6px !important;
+      }
+      
+      .developer-credit {
+        font-size: 9px !important;
+        padding: 4px !important;
+        margin-bottom: 3px !important;
+        line-height: 1.3 !important;
       }
 
       /* responsive tweak for very small screens */
       @media (max-width: 540px) {
-        .dev-photos img { width: 48px; height:48px; }
+        .dev-photos img { width: 70px; height: 70px; }
+        .dev-photos .dev-caption { font-size: 11px; }
       }
     </style>
 </head>
 <body>
-    <!-- Copyright Ticker -->
-    <div class="copyright-ticker" id="copyrightTicker">
-        <div class="ticker-content">
-            Copyright © 2025-26 | Developed by Maninder Singh (SOE Amloh) (Mobile: 9855533266) & Pooja Goel (SOE Khamano) | CFs Fatehgarh Sahib
-        </div>
-    </div>
     
     <div class="app-container">
         <!-- Sidebar Navigation -->
@@ -164,13 +323,17 @@
             <div class="sidebar-footer">
                 <p class="developer-credit">For Teacher Fest 2025-26<br><strong>CFs Fatehgarh Sahib</strong></p>
 
-                <!-- NEW: Vertical developer photos (small) -->
+                <!-- Horizontal developer photos with clickable names -->
                 <div class="dev-photos" aria-label="Core developers">
-                  <img src="/web/images/dev1.jpg" alt="Maninder Singh - Lead Developer" title="Maninder Singh — Lead Developer & System Architect">
-                  <div class="dev-caption">Maninder Singh</div>
+                  <div class="dev-item" onclick="navigateToDeveloper(0)">
+                    <img src="/web/images/dev1.jpg" alt="Maninder Singh - Lead Developer" title="Maninder Singh — Lead Developer & System Architect">
+                    <div>Maninder Singh</div>
+                  </div>
 
-                  <img src="/web/images/dev2.jpg" alt="Pooja Goel - Team Coordinator" title="Pooja Goel — Team Coordinator (Project Support)">
-                  <div class="dev-caption">Pooja Goel</div>
+                  <div class="dev-item" onclick="navigateToDeveloper(1)">
+                    <img src="/web/images/dev2.jpg" alt="Pooja Goel - Team Coordinator" title="Pooja Goel — Team Coordinator (Project Support)">
+                    <div>Pooja Goel</div>
+                  </div>
                 </div>
             </div>
         </aside>
@@ -352,6 +515,109 @@
                         <div class="features-footer">
                             <h2>Developed For</h2>
                             <p class="footer-large">Teacher Fest 2025-26</p>
+                            
+                            <!-- Developer Cards Section (scroll target) -->
+                            <div id="developerCards" style="margin-top: 40px; padding: 30px 20px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08)) !important; border-radius: 12px;">
+                                <h2 style="text-align: center; margin-bottom: 30px; font-size: 28px; color: #3730a3 !important; text-shadow: 0 0 1px #3730a3;">Meet the Developers</h2>
+                                <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;">
+                                    <!-- Developer Card 1 -->
+                                    <div style="background: #ffffff !important; background-color: #ffffff !important; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 320px; text-align: left; border: 2px solid rgba(99, 102, 241, 0.3);">
+                                        <div style="text-align: center; margin-bottom: 15px;">
+                                            <img src="/web/images/dev1.jpg" alt="Maninder Singh" style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; border: 3px solid #4f46e5; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); display: inline-block;">
+                                        </div>
+                                        <h3 style="color: #1e3a8a !important; margin-bottom: 6px; font-size: 20px; text-align: center; font-weight: 700;">Maninder Singh</h3>
+                                        <p style="color: #4b5563 !important; font-size: 13px; margin-bottom: 15px; text-align: center; font-style: italic;">Lead Developer & System Architect</p>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Designation</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Computer Faculty</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">School</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">School of Eminence Amloh</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Block</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Amloh</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">District</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Fatehgarh Sahib</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">State</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Punjab</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Department</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Department of Education Punjab</span>
+                                        </div>
+                                        
+                                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                                            <div style="margin-bottom: 6px;">
+                                                <strong style="color: #000000 !important; font-size: 12px; display: inline; margin-right: 6px; font-weight: 700;">📱 Mobile:</strong>
+                                                <span style="color: #2563eb !important; font-size: 13px; font-weight: 600;">9855533266</span>
+                                            </div>
+                                            <div>
+                                                <strong style="color: #000000 !important; font-size: 12px; display: inline; margin-right: 6px; font-weight: 700;">📧 Email:</strong>
+                                                <span style="color: #2563eb !important; font-size: 12px;">maninder@example.com</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Developer Card 2 -->
+                                    <div style="background: #ffffff !important; background-color: #ffffff !important; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 320px; text-align: left; border: 2px solid rgba(168, 85, 247, 0.3);">
+                                        <div style="text-align: center; margin-bottom: 15px;">
+                                            <img src="/web/images/dev2.jpg" alt="Pooja Goel" style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; border: 3px solid #7c3aed; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); display: inline-block;">
+                                        </div>
+                                        <h3 style="color: #581c87 !important; margin-bottom: 6px; font-size: 20px; text-align: center; font-weight: 700;">Pooja Goel</h3>
+                                        <p style="color: #4b5563 !important; font-size: 13px; margin-bottom: 15px; text-align: center; font-style: italic;">Team Coordinator (Project Support)</p>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Designation</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Computer Faculty</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">School</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">School of Eminence Khamano</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Block</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Khamano</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">District</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Fatehgarh Sahib</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">State</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Punjab</span>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Department</strong>
+                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Department of Education Punjab</span>
+                                        </div>
+                                        
+                                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                                            <div>
+                                                <strong style="color: #000000 !important; font-size: 12px; display: inline; margin-right: 6px; font-weight: 700;">📧 Email:</strong>
+                                                <span style="color: #7c3aed !important; font-size: 12px;">pooja@example.com</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <p class="copyright-text">Copyright © 2025-26 PRISM Team</p>
                         </div>
                     </div>
@@ -456,5 +722,26 @@
     </div>
 </footer>
     <script src="/web/script.js"></script>
+    <script>
+        // Function to navigate to developer cards on features page
+        function navigateToDeveloper(developerIndex) {
+            // Switch to features view
+            const featuresBtn = document.querySelector('[data-view="features"]');
+            if (featuresBtn) {
+                featuresBtn.click();
+            }
+            
+            // Wait for view to load, then scroll to developer cards
+            setTimeout(() => {
+                const developerCards = document.getElementById('developerCards');
+                if (developerCards) {
+                    developerCards.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }
+            }, 300);
+        }
+    </script>
 </body>
 </html>
