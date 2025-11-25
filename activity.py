@@ -627,7 +627,7 @@ def get_complete_stats():
         
         # Most viewed terms (top 5)
         cur.execute("""
-            SELECT term, views, last_viewed 
+            SELECT term_key AS term, views, last_viewed 
             FROM term_view_aggregates 
             WHERE user_id = ?
             ORDER BY views DESC 

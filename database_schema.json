@@ -160,7 +160,7 @@
       "sample_data": []
     },
     "sqlite_sequence": {
-      "row_count": 3,
+      "row_count": 5,
       "schema": [
         {
           "name": "name",
@@ -782,6 +782,57 @@
       "indexes": [],
       "sample_data": []
     },
+    "user_preferences": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": "'local'",
+          "primary_key": true
+        },
+        {
+          "name": "preference_key",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "preference_value",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_preferences_user",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "sqlite_autoindex_user_preferences_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ],
+      "sample_data": []
+    },
     "user_prefs": {
       "row_count": 0,
       "schema": [
@@ -832,6 +883,72 @@
         }
       ],
       "sample_data": []
+    },
+    "user_recent_terms": {
+      "row_count": 2,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "term",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "subject",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "viewed_at",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_recent_terms_user_time",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        }
+      ],
+      "sample_data": [
+        {
+          "id": 1,
+          "user_id": "local",
+          "term": "5G",
+          "subject": "Computer Science & IT",
+          "viewed_at": "2025-11-26T01:21:25.090550"
+        },
+        {
+          "id": 2,
+          "user_id": "local",
+          "term": "5G",
+          "subject": "Computer Science & IT",
+          "viewed_at": "2025-11-26T01:22:10.805603"
+        }
+      ]
     },
     "user_sessions": {
       "row_count": 0,
@@ -949,7 +1066,7 @@
       "sample_data": []
     },
     "user_term_meta": {
-      "row_count": 0,
+      "row_count": 1,
       "schema": [
         {
           "name": "id",
@@ -1067,7 +1184,22 @@
           "partial": 0
         }
       ],
-      "sample_data": []
+      "sample_data": [
+        {
+          "id": 6,
+          "term": "5G",
+          "user_id": "local",
+          "favorite": 1,
+          "bookmark": 1,
+          "difficulty": "medium",
+          "rating": 5,
+          "read_status": "to-read",
+          "personal_tags": "",
+          "notes": "",
+          "last_viewed": "2025-11-26T01:22:10.789662",
+          "important_level": 0
+        }
+      ]
     }
   }
 }
