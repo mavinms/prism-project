@@ -1165,17 +1165,22 @@ function createCollectionFromLevels() {
     const name = levels.join(' > ');
 
     const collection = {
-        id: Date.now(),
         name: name,
         levels: levels,
         terms: currentTerm ? [currentTerm.term] : [],
-        created: new Date().toISOString()
+        created: new Date().toISOString(),
+        dbSaved: false  // Mark as not yet saved to DB
     };
 
     userCollections.push(collection);
-   // Collections auto-saved to database via API
+    
+    // Save to database
+    saveCollections().then(() => {
+        renderCollectionsView();
+        showNotification(`Created and added to "${name}"`);
+    });
+    
     closeCollectionModal();
-    showNotification(`Created and added to "${name}"`);
 }
 
 function addTermToCollection(collectionIndex) {
@@ -1184,8 +1189,13 @@ function addTermToCollection(collectionIndex) {
     const collection = userCollections[collectionIndex];
     if (!collection.terms.includes(currentTerm.term)) {
         collection.terms.push(currentTerm.term);
-       // Collections auto-saved to database via API
-        showNotification(`Added to "${collection.name}"`);
+        collection.modified = true; // Mark as modified
+        
+        // Save to database
+        saveCollections().then(() => {
+            renderCollectionsView();
+            showNotification(`Added to "${collection.name}"`);
+        });
     } else {
         showNotification('Already in this list');
     }
@@ -1195,6 +1205,55 @@ function addTermToCollection(collectionIndex) {
 function closeCollectionModal() {
     const modal = document.getElementById('collectionModal');
     if (modal) modal.remove();
+}
+
+// Save collections to database
+async function saveCollections() {
+    try {
+        // Save each collection that doesn't have a database ID yet, or update existing ones
+        for (const collection of userCollections) {
+            if (!collection.dbSaved) {
+                // Create new collection
+                const response = await fetch('/api/collections', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: 'local',
+                        name: collection.name,
+                        description: collection.description || '',
+                        terms: collection.terms || []
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    collection.id = result.id; // Update with DB ID
+                    collection.dbSaved = true;
+                } else {
+                    console.error('Failed to save collection:', collection.name);
+                }
+            } else if (collection.modified) {
+                // Update existing collection
+                const response = await fetch(`/api/collections/${collection.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: collection.name,
+                        description: collection.description || '',
+                        terms: collection.terms || []
+                    })
+                });
+                
+                if (response.ok) {
+                    collection.modified = false;
+                } else {
+                    console.error('Failed to update collection:', collection.name);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error saving collections:', error);
+    }
 }
 
 async function loadCollections() {
@@ -1311,18 +1370,21 @@ function createNewCollection() {
     const name = levels.join(' > ');
 
     const collection = {
-        id: Date.now(),
         name: name,
         levels: levels,
         terms: [],
-        created: new Date().toISOString()
+        created: new Date().toISOString(),
+        dbSaved: false  // Mark as not yet saved to DB
     };
 
     userCollections.push(collection);
-    // Collections auto-saved to database via API
-    document.getElementById('createCollectionModal').remove();
-    showNotification(`Collection "${name}" created!`);
-    renderCollectionsView();
+    
+    // Save to database
+    saveCollections().then(() => {
+        document.getElementById('createCollectionModal').remove();
+        showNotification(`Collection "${name}" created!`);
+        renderCollectionsView();
+    });
 }
 
 function editCollection(index) {
@@ -1377,11 +1439,14 @@ function saveCollectionEdit(index) {
 
     userCollections[index].name = name;
     userCollections[index].levels = levels;
-   // Collections auto-saved to database via API
+    userCollections[index].modified = true; // Mark as modified
 
-    document.getElementById('editCollectionModal').remove();
-    showNotification('Collection updated!');
-    renderCollectionsView();
+    // Save to database
+    saveCollections().then(() => {
+        document.getElementById('editCollectionModal').remove();
+        showNotification('Collection updated!');
+        renderCollectionsView();
+    });
 }
 
 function viewCollection(index) {
@@ -1433,10 +1498,26 @@ function removeFromCollection(collectionIndex, termName) {
     showNotification('Term removed from collection');
 }
 
-function deleteCollection(index) {
-    if (confirm(`Delete "${userCollections[index].name}"?`)) {
+async function deleteCollection(index) {
+    const collection = userCollections[index];
+    if (confirm(`Delete "${collection.name}"?`)) {
+        // Delete from database if it has an ID
+        if (collection.id) {
+            try {
+                const response = await fetch(`/api/collections/${collection.id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to delete collection from database');
+                }
+            } catch (error) {
+                console.error('Error deleting collection:', error);
+            }
+        }
+        
+        // Remove from local array
         userCollections.splice(index, 1);
-        // Collections auto-saved to database via API
         renderCollectionsView();
         showNotification('Collection deleted');
     }

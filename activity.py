@@ -166,97 +166,210 @@ def post_search():
 # NEW/MODIFIED COLLECTION ENDPOINTS (REPLACES OLD JSON FIELD LOGIC)
 # ------------------------------------------------------------------
 
+# activity.py - Replace your existing collection management functions with this block.
+# This code assumes you have 'from flask import ... current_app' and 
+# the _json_field utility defined at the top of your activity.py file.
+
+# ----------------------------------------------------------------------
+# 📚 COLLECTION MANAGEMENT ENDPOINTS (FIXED FOR PERSISTENCE)
+# ----------------------------------------------------------------------
+
 @activity_bp.route('/api/collections', methods=['GET'])
 def get_collections():
-    """Fetches all user collections and their terms from the new many-to-many tables."""
+    """Retrieves all collections and their terms for the user."""
     user_id = request.args.get('user_id', 'local')
-    
-    # Local import of get_db (FIX APPLIED)
     from app import get_db
+    db = get_db()
+    cursor = db.cursor()
+    
     try:
-        db=get_db()
-        cursor = db.cursor()
+        # 1. Fetch collections
+        cursor.execute("SELECT id, name FROM user_collections WHERE user_id = ? ORDER BY created_at DESC", (user_id,))
+        collections_raw = [dict(row) for row in cursor.fetchall()]
         
-        # 1. Get all collections for the user
-        cursor.execute("SELECT id, name FROM user_collections WHERE user_id = ?", (user_id,))
-        collections_data = cursor.fetchall()
-        
+        # 2. Fetch terms for all collections
         collections = []
-        for coll in collections_data:
-            # 2. Get terms for each collection
-            cursor.execute("SELECT term FROM collection_terms WHERE collection_id = ?", (coll['id'],))
+        for collection in collections_raw:
+            col_id = collection['id']
+            cursor.execute("SELECT term FROM collection_terms WHERE collection_id = ?", (col_id,))
             terms = [row['term'] for row in cursor.fetchall()]
             
-            collections.append({
-                'id': coll['id'],
-                'name': coll['name'],
-                'terms': terms 
-            })
-            
+            collection['terms'] = terms
+            collections.append(collection)
         
         return jsonify(collections)
+        
     except Exception as e:
         current_app.logger.exception("get_collections failed")
         return jsonify({'error': str(e)}), 500
 
+
 @activity_bp.route('/api/collections', methods=['POST'])
 def save_collection():
-    """Saves a new collection or updates an existing one using the user_collections and collection_terms tables."""
+    """Creates a new collection or updates an existing one (includes term replacement).
+    
+    CRITICAL FIX: db.commit() added to ensure data persistence.
+    """
     data = request.get_json(force=True)
     user_id = _json_field(data, 'user_id', 'local')
-    name = _json_field(data, 'name') # New required field for the collection name
+    name = _json_field(data, 'name')
     terms = _json_field(data, 'terms', []) # List of terms in the collection
     collection_id = _json_field(data, 'id') # Optional: for updating existing
-
+    
     if not name:
         return jsonify({'error': 'Collection name is required'}), 400
 
-    # Local import of get_db (FIX APPLIED)
     from app import get_db
-    db=get_db()
+    db = get_db()
     cursor = db.cursor()
+    id_to_use = collection_id
 
     try:
         if collection_id:
-            # Update existing collection: update the name in the user_collections table
+            # --- Update existing collection ---
+            # 1. Update the name
             cursor.execute("UPDATE user_collections SET name = ? WHERE id = ? AND user_id = ?", (name, collection_id, user_id))
-            # Delete old terms to replace them with the new list (transactional replacement)
+            
+            # 2. Delete old terms to replace them with the new list
             cursor.execute("DELETE FROM collection_terms WHERE collection_id = ?", (collection_id,))
+            
+            if cursor.rowcount == 0:
+                # Optional: If collection_id was provided but not found, could be an error
+                current_app.logger.warning(f"Attempted to update non-existent collection ID {collection_id}")
+                pass
+            
             id_to_use = collection_id
+            
         else:
-            # Insert new collection and get its ID
+            # --- Create new collection ---
+            # Check for name collision first
+            cursor.execute("SELECT 1 FROM user_collections WHERE user_id = ? AND name = ?", (user_id, name))
+            if cursor.fetchone():
+                return jsonify({"error": "A collection with this name already exists"}), 409
+            
+            # Insert the new collection
             cursor.execute("INSERT INTO user_collections (user_id, name) VALUES (?, ?)", (user_id, name))
             id_to_use = cursor.lastrowid
-        
-        # Insert all terms into the collection_terms linking table
-        for term in terms:
-            cursor.execute("INSERT INTO collection_terms (collection_id, term) VALUES (?, ?)", (id_to_use, term))
 
-        db.commit()
+        # 3. Insert new terms (for both create and update)
+        if id_to_use and terms:
+            term_data = [(id_to_use, term) for term in terms]
+            cursor.executemany("INSERT OR IGNORE INTO collection_terms (collection_id, term) VALUES (?, ?)", term_data)
+
+        # <<< CRITICAL FIX: COMMIT THE TRANSACTION >>>
+        db.commit() 
+        # ---------------------------------------------
         
-        return jsonify({'message': 'Collection saved successfully', 'id': id_to_use}), 200
+        return jsonify({
+            'message': 'Collection saved successfully',
+            'id': id_to_use,
+            'name': name,
+            'terms_count': len(terms)
+        }), 200
+
     except Exception as e:
         db.rollback()
-        
         current_app.logger.exception("save_collection failed")
         return jsonify({'error': str(e)}), 500
 
-@activity_bp.route('/api/collections/<int:cid>', methods=['DELETE'])
-def delete_collection(cid):
-    """Deletes a collection. Terms are automatically deleted from collection_terms via ON DELETE CASCADE."""
+
+@activity_bp.route('/api/collections/<int:collection_id>', methods=['DELETE'])
+def delete_collection(collection_id):
+    """Deletes a collection. FIX: Added db.commit()"""
     user_id = request.args.get('user_id', 'local')
+    from app import get_db
+    db = get_db()
+    cursor = db.cursor()
+
     try:
-        # Local import of get_db (FIX APPLIED)
-        from app import get_db
-        db=get_db()
-        cur = db.cursor()
-        # Deleting from user_collections is enough due to the FOREIGN KEY ON DELETE CASCADE constraint
-        cur.execute("DELETE FROM user_collections WHERE id = ? AND user_id = ?", (cid, user_id))
-        db.commit()
+        # Delete the collection (ON DELETE CASCADE handles terms deletion)
+        cursor.execute("DELETE FROM user_collections WHERE id = ? AND user_id = ?", (collection_id, user_id))
         
-        return jsonify({'success': True})
+        # <<< CRITICAL FIX: COMMIT THE TRANSACTION >>>
+        db.commit() 
+        # ---------------------------------------------
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Collection not found or access denied"}), 404
+        
+        return jsonify({'message': 'Collection deleted successfully'}), 200
+
     except Exception as e:
+        db.rollback()
         current_app.logger.exception("delete_collection failed")
+        return jsonify({'error': str(e)}), 500
+
+
+@activity_bp.route('/api/collections/<int:collection_id>/terms', methods=['POST'])
+def add_term_to_collection(collection_id):
+    """Adds a single term to a collection. FIX: Added db.commit()"""
+    from app import get_db
+    db = get_db()
+    cursor = db.cursor()
+    
+    data = request.get_json(force=True)
+    user_id = _json_field(data, 'user_id', 'local')
+    term = _json_field(data, 'term')
+    
+    if not term:
+        return jsonify({'error': 'Term is required'}), 400
+    
+    try:
+        # Check if the collection belongs to the user
+        cursor.execute("SELECT 1 FROM user_collections WHERE id = ? AND user_id = ?", (collection_id, user_id))
+        if cursor.fetchone() is None:
+            return jsonify({"error": "Collection not found or access denied"}), 404
+
+        # Insert the term (using INSERT OR IGNORE to handle duplicates gracefully)
+        cursor.execute("INSERT OR IGNORE INTO collection_terms (collection_id, term) VALUES (?, ?)", (collection_id, term))
+        
+        # <<< CRITICAL FIX: COMMIT THE TRANSACTION >>>
+        db.commit() 
+        # ---------------------------------------------
+
+        return jsonify({'message': f'Term {term} added successfully'}), 200
+
+    except Exception as e:
+        db.rollback()
+        current_app.logger.exception("add_term_to_collection failed")
+        return jsonify({'error': str(e)}), 500
+
+
+@activity_bp.route('/api/collections/<int:collection_id>/terms', methods=['DELETE'])
+def remove_term_from_collection(collection_id):
+    """Removes a single term from a collection. FIX: Added db.commit()"""
+    from app import get_db
+    db = get_db()
+    cursor = db.cursor()
+    
+    data = request.get_json(force=True)
+    user_id = _json_field(data, 'user_id', 'local')
+    term = _json_field(data, 'term')
+    
+    if not term:
+        return jsonify({'error': 'Term is required'}), 400
+
+    try:
+        # Check if the collection belongs to the user
+        cursor.execute("SELECT 1 FROM user_collections WHERE id = ? AND user_id = ?", (collection_id, user_id))
+        if cursor.fetchone() is None:
+            return jsonify({"error": "Collection not found or access denied"}), 404
+
+        # Delete the term link
+        cursor.execute("DELETE FROM collection_terms WHERE collection_id = ? AND term = ?", (collection_id, term))
+        
+        # <<< CRITICAL FIX: COMMIT THE TRANSACTION >>>
+        db.commit() 
+        # ---------------------------------------------
+        
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Term not found in collection"}), 404
+
+        return jsonify({'message': f'Term {term} removed successfully'}), 200
+
+    except Exception as e:
+        db.rollback()
+        current_app.logger.exception("remove_term_from_collection failed")
         return jsonify({'error': str(e)}), 500
 
 # ------------------------------------------------------------------
