@@ -1,0 +1,1073 @@
+{
+  "database_path": "C:\\Users\\manin\\OneDrive\\Desktop\\Prism\\prism.sqlite",
+  "tables": {
+    "homework": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "term",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "due_date",
+          "type": "DATE",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "added_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "sample_data": []
+    },
+    "saved_tests": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "creator",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        },
+        {
+          "name": "config_json",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "sample_data": []
+    },
+    "search_logs": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "query",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "results_count",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "clicked_term",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_search_user_time",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        }
+      ],
+      "sample_data": []
+    },
+    "sqlite_sequence": {
+      "row_count": 3,
+      "schema": [
+        {
+          "name": "name",
+          "type": "",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "seq",
+          "type": "",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "sample_data": [
+        {
+          "name": "user_activity_log",
+          "seq": 1
+        },
+        {
+          "name": "term_view_aggregates",
+          "seq": 1
+        },
+        {
+          "name": "subject_view_aggregates",
+          "seq": 1
+        }
+      ]
+    },
+    "subject_view_aggregates": {
+      "row_count": 1,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "subject",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "views",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": "0",
+          "primary_key": false
+        },
+        {
+          "name": "total_time_ms",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": "0",
+          "primary_key": false
+        },
+        {
+          "name": "last_viewed",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_subject_aggregate",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "sqlite_autoindex_subject_view_aggregates_1",
+          "unique": 1,
+          "origin": "u",
+          "partial": 0
+        }
+      ],
+      "sample_data": [
+        {
+          "id": 1,
+          "user_id": "local",
+          "subject": "Physics",
+          "views": 1,
+          "total_time_ms": 0,
+          "last_viewed": "2025-11-24T18:58:33.796936"
+        }
+      ]
+    },
+    "term_history": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "term",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "subject",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "action",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "details",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "timestamp",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "sample_data": []
+    },
+    "term_view_aggregates": {
+      "row_count": 1,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "term_key",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "views",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": "0",
+          "primary_key": false
+        },
+        {
+          "name": "last_viewed",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "total_time_ms",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": "0",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_term_aggregate",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "sqlite_autoindex_term_view_aggregates_1",
+          "unique": 1,
+          "origin": "u",
+          "partial": 0
+        }
+      ],
+      "sample_data": [
+        {
+          "id": 1,
+          "user_id": "local",
+          "term_key": "Gravity",
+          "views": 1,
+          "last_viewed": "2025-11-24T18:58:33.796816",
+          "total_time_ms": 0
+        }
+      ]
+    },
+    "terms_data": {
+      "row_count": 19298,
+      "schema": [
+        {
+          "name": "term",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "subject",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "definition",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "keyPoints_str",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "example",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "objective_qa_json",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "descriptive_qa_json",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "quiz_data_json",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "orig_subject",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_terms_data_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ],
+      "sample_data": [
+        {
+          "term": "Web Developer",
+          "subject": "Computer Science & IT",
+          "definition": "A web developer is a professional responsible for designing, building, and maintaining websites and web applications. They use programming languages like HTML, CSS, and JavaScript to create interactive and user-friendly interfaces. Web developers work on both front-end and back-end development.",
+          "keyPoints_str": "Design and build websites and web applications||Use programming languages like HTML, CSS, and JavaScript||Work on front-end and back-end development||Ensure website usability and accessibility",
+          "example": "A web developer created a website for a company using HTML, CSS, and JavaScript.",
+          "objective_qa_json": "[{\"question\": \"What is HTML?\", \"answer\": \"Hypertext Markup Language\"}, {\"question\": \"Is JavaScript a backend language?\", \"answer\": \"False\"}, {\"question\": \"What does CSS stand for?\", \"answer\": \"Cascading Style Sheets\"}, {\"question\": \"Is PHP a programming language?\", \"answer\": \"True\"}, {\"question\": \"What is the role of a Web Developer?\", \"answer\": \"Build websites\"}, {\"question\": \"Is SQL a database language?\", \"answer\": \"True\"}, {\"question\": \"What is the purpose of API?\", \"answer\": \"Data exchange\"}]",
+          "descriptive_qa_json": "[{\"question\": \"What are the primary responsibilities of a Web Developer?\", \"answer\": \"A Web Developer is responsible for designing, building, and maintaining websites and web applications. They work on the client-side and server-side of websites, ensuring that they are visually appealing, user-friendly, and functional.\"}, {\"question\": \"What programming languages are commonly used by Web Developers?\", \"answer\": \"Web Developers commonly use programming languages such as JavaScript, HTML, CSS, PHP, and SQL to build and maintain websites and web applications. They may also use frameworks and libraries like React, Angular, and Vue.js to streamline their development process.\"}, {\"question\": \"What is the difference between a Front-end and Back-end Web Developer?\", \"answer\": \"A Front-end Web Developer focuses on the client-side of a website, working on the user interface and user experience. A Back-end Web Developer, on the other hand, focuses on the server-side, working on the database, server, and API integration. Full-stack Web Developers work on both the front-end and back-end of a website.\"}, {\"question\": \"What skills are required to become a successful Web Developer?\", \"answer\": \"To become a successful Web Developer, one needs to have a strong foundation in programming languages, frameworks, and libraries. They should also have good problem-solving skills, attention to detail, and the ability to work collaboratively with others. Additionally, they should stay up-to-date with the latest trends and technologies in web development.\"}, {\"question\": \"What are the benefits of being a Web Developer?\", \"answer\": \"Being a Web Developer offers many benefits, including the opportunity to work on a wide range of projects, from small websites to complex web applications. It also provides a high level of job satisfaction, as Web Developers can see the direct impact of their work on users. Additionally, the demand for skilled Web Developers is high, making it a stable and lucrative career choice.\"}]",
+          "quiz_data_json": "[{\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q1\", \"question_text\": \"A web developer is tasked with optimizing the performance of a website. The website has a large number of images, and the developer notices that the images are not being compressed, resulting in longer load times. What would be the most effective approach to reduce the load time, while also ensuring that the image quality is preserved?\", \"options\": {\"A\": \"Use a content delivery network (CDN) to distribute the images across different servers\", \"B\": \"Compress the images using a lossless compression algorithm, such as gzip\", \"C\": \"Use a image compression tool, such as TinyPNG, to compress the images\", \"D\": \"Reduce the number of images on the website\"}, \"correct_answer_key\": \"C\", \"explanation\": \"Compressing images using a tool like TinyPNG can significantly reduce the file size, resulting in faster load times. This approach preserves the image quality, while also reducing the load time. Other options, such as using a CDN or reducing the number of images, may also be effective, but compressing the images is the most direct and effective approach.\"}, {\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q2\", \"question_text\": \"A web developer is building a web application that requires users to log in. The developer wants to ensure that the user's password is stored securely. What is the most secure approach to store the user's password?\", \"options\": {\"A\": \"Store the password in plain text in the database\", \"B\": \"Hash the password using a hash function, such as MD5, and store the hashed password in the database\", \"C\": \"Use a password vault to store the password\", \"D\": \"Store the password securely using a library, such as bcrypt\"}, \"correct_answer_key\": \"D\", \"explanation\": \"Using a library like bcrypt to store the password is the most secure approach. Bcrypt uses a salted hash to store the password, making it more secure than simply hashing the password. Other options, such as storing the password in plain text or using a hash function like MD5, are not secure and should not be used.\"}, {\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q3\", \"question_text\": \"A web developer is tasked with building a responsive web application that works on both desktop and mobile devices. What is the most effective approach to ensure that the web application is responsive?\", \"options\": {\"A\": \"Use a separate website for mobile devices\", \"B\": \"Use a mobile-first approach to design the web application\", \"C\": \"Use a CSS framework, such as Bootstrap, to build the web application\", \"D\": \"Use a JavaScript library, such as jQuery, to build the web application\"}, \"correct_answer_key\": \"B\", \"explanation\": \"Using a mobile-first approach to design the web application ensures that the application is responsive and works well on both desktop and mobile devices. This approach involves designing the application for mobile devices first, and then adding more features and functionality for desktop devices. Other options, such as using a separate website for mobile devices or using a CSS framework, may also be effective, but a mobile-first approach is the most effective way to ensure responsiveness.\"}, {\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q4\", \"question_text\": \"A web developer is building a web application that requires real-time updates. What is the most effective approach to achieve real-time updates?\", \"options\": {\"A\": \"Use a polling approach to periodically update the data\", \"B\": \"Use a WebSockets approach to establish a real-time connection between the client and server\", \"C\": \"Use a AJAX approach to update the data\", \"D\": \"Use a Server-Sent Events (SSE) approach to update the data\"}, \"correct_answer_key\": \"B\", \"explanation\": \"Using a WebSockets approach is the most effective way to achieve real-time updates. WebSockets establish a bi-directional connection between the client and server, allowing for real-time updates. Other options, such as polling or using AJAX, may also be effective, but WebSockets provide the most efficient and scalable way to achieve real-time updates.\"}, {\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q5\", \"question_text\": \"A web developer is tasked with optimizing the performance of a web application. The application uses a lot of JavaScript code, which is slowing down the page load time. What is the most effective approach to reduce the page load time?\", \"options\": {\"A\": \"Minify and compress the JavaScript code\", \"B\": \"Use a JavaScript library, such as jQuery, to reduce the amount of code\", \"C\": \"Use a code splitting approach to load the JavaScript code on demand\", \"D\": \"Use a tree shaking approach to remove unused code\"}, \"correct_answer_key\": \"A\", \"explanation\": \"Minifying and compressing the JavaScript code is the most effective way to reduce the page load time. This approach reduces the file size of the JavaScript code, resulting in faster load times. Other options, such as using a JavaScript library or code splitting, may also be effective, but minifying and compressing the code is the most direct and effective approach.\"}, {\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q6\", \"question_text\": \"A web developer is building a web application that requires users to upload files. What is the most secure approach to handle file uploads?\", \"options\": {\"A\": \"Store the uploaded files in a public directory\", \"B\": \"Store the uploaded files in a private directory, with restricted access\", \"C\": \"Use a cloud-based storage service, such as AWS S3, to store the uploaded files\", \"D\": \"Validate the uploaded files using a virus scanner\"}, \"correct_answer_key\": \"C\", \"explanation\": \"Using a cloud-based storage service, such as AWS S3, is the most secure approach to handle file uploads. This approach stores the uploaded files in a secure and scalable manner, with built-in security features such as access controls and encryption. Other options, such as storing the files in a public or private directory, may not provide the same level of security and scalability.\"}, {\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q7\", \"question_text\": \"A web developer is tasked with building a web application that requires authentication and authorization. What is the most effective approach to implement authentication and authorization?\", \"options\": {\"A\": \"Use a username and password approach to authenticate users\", \"B\": \"Use a token-based approach, such as JSON Web Tokens (JWT), to authenticate users\", \"C\": \"Use a role-based access control (RBAC) approach to authorize users\", \"D\": \"Use a claims-based approach to authenticate and authorize users\"}, \"correct_answer_key\": \"B\", \"explanation\": \"Using a token-based approach, such as JSON Web Tokens (JWT), is the most effective way to implement authentication and authorization. This approach provides a secure and scalable way to authenticate users and authorize access to resources. Other options, such as using a username and password or role-based access control, may also be effective, but token-based authentication provides the most flexibility and security.\"}, {\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q8\", \"question_text\": \"A web developer is building a web application that requires real-time updates to a large number of users. What is the most effective approach to achieve real-time updates to a large number of users?\", \"options\": {\"A\": \"Use a WebSockets approach to establish a real-time connection between the client and server\", \"B\": \"Use a Server-Sent Events (SSE) approach to update the data\", \"C\": \"Use a publish-subscribe approach, such as WebRTC, to establish a real-time connection between the clients\", \"D\": \"Use a cloud-based messaging service, such as Firebase Cloud Messaging, to send real-time updates\"}, \"correct_answer_key\": \"D\", \"explanation\": \"Using a cloud-based messaging service, such as Firebase Cloud Messaging, is the most effective way to achieve real-time updates to a large number of users. This approach provides a scalable and reliable way to send real-time updates to a large number of users, without having to establish and maintain a real-time connection between the clients and server. Other options, such as using WebSockets or SSE, may also be effective, but cloud-based messaging services provide the most scalability and reliability.\"}, {\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q9\", \"question_text\": \"A web developer is tasked with optimizing the performance of a web application that uses a large amount of data. What is the most effective approach to optimize the performance of the web application?\", \"options\": {\"A\": \"Use a caching approach to store frequently accessed data\", \"B\": \"Use a content delivery network (CDN) to distribute the data across different servers\", \"C\": \"Use a data compression approach to reduce the size of the data\", \"D\": \"Use a database indexing approach to improve the performance of database queries\"}, \"correct_answer_key\": \"A\", \"explanation\": \"Using a caching approach is the most effective way to optimize the performance of the web application. Caching stores frequently accessed data in memory, reducing the need to query the database or retrieve data from a remote server. This approach can significantly improve the performance of the web application, especially when dealing with large amounts of data. Other options, such as using a CDN or data compression, may also be effective, but caching provides the most direct and significant performance improvement.\"}, {\"subject\": \"Computer Science\", \"term\": \"Web Developer\", \"question_id\": \"Q10\", \"question_text\": \"A web developer is building a web application that requires integration with a third-party API. What is the most effective approach to integrate with the third-party API?\", \"options\": {\"A\": \"Use a RESTful API approach to integrate with the third-party API\", \"B\": \"Use a GraphQL API approach to integrate with the third-party API\", \"C\": \"Use a SOAP API approach to integrate with the third-party API\", \"D\": \"Use a API gateway approach to integrate with the third-party API\"}, \"correct_answer_key\": \"A\", \"explanation\": \"Using a RESTful API approach is the most effective way to integrate with the third-party API. RESTful APIs provide a flexible and scalable way to integrate with external APIs, using standard HTTP methods and protocols. Other options, such as using GraphQL or SOAP, may also be effective, but RESTful APIs provide the most widely adopted and supported approach to API integration.\"}]",
+          "orig_subject": "Computer Science"
+        },
+        {
+          "term": "Fast Marching Method",
+          "subject": "Computer Science & IT",
+          "definition": "The Fast Marching Method is a numerical technique used to solve partial differential equations (PDEs) and track interfaces or fronts in various fields like image processing and computational physics. It is an efficient algorithm for computing the solution of PDEs. The method is used to track the evolution of interfaces.",
+          "keyPoints_str": "Numerical technique for solving PDEs||Used in image processing and computational physics||Efficient algorithm for computing solutions||Tracks the evolution of interfaces",
+          "example": "The Fast Marching Method was used to track the movement of a front in a computational physics simulation.",
+          "objective_qa_json": "[{\"question\": \"What does FMM stand for?\", \"answer\": \"Fast Marching Method\"}, {\"question\": \"Is FMM used for image segmentation?\", \"answer\": \"True\"}, {\"question\": \"What type of problem does FMM solve?\", \"answer\": \"Boundary value\"}, {\"question\": \"Is FMM a numerical method?\", \"answer\": \"True\"}, {\"question\": \"What is the main application of FMM?\", \"answer\": \"Image processing\"}, {\"question\": \"Does FMM use level sets?\", \"answer\": \"True\"}, {\"question\": \"Is FMM an iterative method?\", \"answer\": \"True\"}]",
+          "descriptive_qa_json": "[{\"question\": \"What is the Fast Marching Method?\", \"answer\": \"The Fast Marching Method is a numerical technique used to solve the eikonal equation and track the evolution of interfaces, such as those found in image segmentation and computational physics. It is based on the concept of level sets and upwind differencing schemes to efficiently compute the solution.\"}, {\"question\": \"How does the Fast Marching Method work?\", \"answer\": \"The Fast Marching Method works by iteratively updating the values of a level set function, which represents the distance from a given interface or boundary. The method uses a finite difference scheme to approximate the derivatives in the eikonal equation and then updates the level set function using an upwind scheme to ensure stability and accuracy.\"}, {\"question\": \"What are the advantages of the Fast Marching Method?\", \"answer\": \"The Fast Marching Method has several advantages, including its ability to efficiently handle complex geometries and topologies, as well as its robustness to noise and other types of perturbations. Additionally, the method can be easily parallelized, making it suitable for large-scale computations.\"}, {\"question\": \"What are the applications of the Fast Marching Method?\", \"answer\": \"The Fast Marching Method has a wide range of applications in image processing, computational physics, and other fields. Some examples include image segmentation, object detection, and tracking, as well as simulations of fluid dynamics, materials science, and other physical phenomena.\"}, {\"question\": \"How does the Fast Marching Method compare to other methods?\", \"answer\": \"The Fast Marching Method is often compared to other level set methods, such as the level set method and the phase field method. While these methods share some similarities, the Fast Marching Method is distinguished by its efficiency and robustness, making it a popular choice for many applications.\"}]",
+          "quiz_data_json": "[{\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q1\", \"question_text\": \"A researcher uses the Fast Marching Method to simulate the propagation of a wildfire in a forest. The fire spreads at a speed of 5 meters per minute in dry conditions and 2 meters per minute in wet conditions. If the forest is partially wet and partially dry, and the initial fire location is known, which of the following best describes how the Fast Marching Method would handle this scenario?\", \"options\": {\"A\": \"It would assume a uniform speed across the entire forest.\", \"B\": \"It would use the speed in dry conditions for the entire simulation.\", \"C\": \"It would account for the varying speeds in different conditions by using a spatially varying speed function.\", \"D\": \"It would be unable to handle this scenario due to the complexity of the forest conditions.\"}, \"correct_answer_key\": \"C\", \"explanation\": \"The Fast Marching Method can handle spatially varying speeds, making it suitable for simulating phenomena in non-uniform environments. By using a speed function that varies across the forest, it can accurately model the fire's propagation. This approach allows for realistic simulations of complex scenarios.\"}, {\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q2\", \"question_text\": \"When applying the Fast Marching Method to track the evolution of a moving front in a 2D domain, what is the primary reason for using an upwind difference scheme?\", \"options\": {\"A\": \"To ensure the stability of the numerical scheme by aligning with the direction of information flow.\", \"B\": \"To reduce computational cost by simplifying the difference equations.\", \"C\": \"To increase the accuracy of the solution by incorporating more grid points.\", \"D\": \"To handle boundary conditions more effectively.\"}, \"correct_answer_key\": \"A\", \"explanation\": \"The upwind difference scheme is used to ensure the stability of the numerical scheme. This is because it aligns with the direction of information flow, preventing non-physical oscillations or instabilities in the solution. Stability is crucial for accurately tracking the moving front.\"}, {\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q3\", \"question_text\": \"Consider a scenario where the Fast Marching Method is applied to a problem with a highly anisotropic medium, where the speed of propagation varies significantly with direction. How would the method need to be adapted to handle such a scenario?\", \"options\": {\"A\": \"By using a finer grid to reduce numerical errors.\", \"B\": \"By incorporating the anisotropy into the speed function used in the method.\", \"C\": \"By switching to a different numerical method that is not based on the Fast Marching principle.\", \"D\": \"By ignoring the anisotropy and assuming isotropic conditions for simplicity.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"To accurately model propagation in an anisotropic medium, the Fast Marching Method must account for the directional dependence of the speed. This is achieved by incorporating the anisotropy into the speed function, allowing the method to correctly simulate the phenomenon. Anisotropic conditions require this adaptation for realistic results.\"}, {\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q4\", \"question_text\": \"In the context of the Fast Marching Method, what is the significance of the 'narrow band' concept, and how does it contribute to the method's efficiency?\", \"options\": {\"A\": \"It refers to the thin region around the moving front where the solution is updated at each time step, reducing computational cost by only considering this critical area.\", \"B\": \"It is a technique used to improve the accuracy of the solution by narrowing down the possible solutions.\", \"C\": \"It is a method for handling boundary conditions more effectively.\", \"D\": \"It is used to increase the stability of the numerical scheme.\"}, \"correct_answer_key\": \"A\", \"explanation\": \"The narrow band concept in the Fast Marching Method involves focusing computations on a thin region around the moving front. This approach significantly reduces computational cost, as it only updates the solution in the critical area at each time step, thus enhancing efficiency without compromising accuracy.\"}, {\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q5\", \"question_text\": \"How does the Fast Marching Method handle non-uniform grids, where the spacing between grid points varies?\", \"options\": {\"A\": \"It assumes a uniform grid for simplicity, ignoring variations in grid spacing.\", \"B\": \"It incorporates the varying grid spacing into the numerical scheme to maintain accuracy.\", \"C\": \"It requires the use of a different numerical method that can handle non-uniform grids.\", \"D\": \"It reduces the order of accuracy in areas with finer grid spacing to match coarser regions.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"The Fast Marching Method can handle non-uniform grids by incorporating the varying grid spacing into the numerical scheme. This adaptation ensures that the method maintains its accuracy even in regions with different grid densities, allowing for more flexible and realistic simulations.\"}, {\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q6\", \"question_text\": \"A team of researchers uses the Fast Marching Method to model the growth of a tumor. The growth rate is influenced by the presence of nutrients and the tumor's distance from major blood vessels. How would the Fast Marching Method be used in this context?\", \"options\": {\"A\": \"By assuming a constant growth rate across the entire tumor.\", \"B\": \"By incorporating spatially varying growth rates based on nutrient availability and distance to blood vessels.\", \"C\": \"By using a uniform grid that does not account for the varying growth conditions.\", \"D\": \"By only considering the growth in one dimension for simplicity.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"The Fast Marching Method can be applied to model the growth of a tumor by incorporating spatially varying growth rates. This involves using a speed function that accounts for the influence of nutrients and the distance to major blood vessels on the growth rate, allowing for a realistic and detailed simulation of tumor growth.\"}, {\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q7\", \"question_text\": \"When using the Fast Marching Method to track the interface between two immiscible fluids, what is crucial for maintaining the stability and accuracy of the simulation?\", \"options\": {\"A\": \"Using a very fine grid to reduce numerical errors.\", \"B\": \"Ensuring that the speed function accurately reflects the physical properties of the fluids and their interface.\", \"C\": \"Applying a different numerical method that is not based on front tracking.\", \"D\": \"Ignoring the effects of surface tension on the interface for simplicity.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"The accuracy and stability of the Fast Marching Method in simulating the interface between two immiscible fluids depend on the accurate representation of the physical properties of the fluids and their interface. This involves ensuring that the speed function used in the method correctly reflects these properties, which is crucial for a realistic and stable simulation.\"}, {\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q8\", \"question_text\": \"Consider applying the Fast Marching Method to a scenario involving the propagation of a seismic wave through a complex geological structure. What is essential for accurately modeling this phenomenon?\", \"options\": {\"A\": \"Assuming a homogeneous geological structure for simplicity.\", \"B\": \"Incorporating the heterogeneity of the geological structure into the speed function.\", \"C\": \"Using a coarser grid to reduce computational costs.\", \"D\": \"Ignoring the effects of anisotropy in the geological structure.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"To accurately model the propagation of a seismic wave through a complex geological structure using the Fast Marching Method, it is essential to incorporate the heterogeneity of the structure into the speed function. This ensures that the simulation accounts for the varying properties of the geological materials, leading to a more realistic and accurate model of the wave's propagation.\"}, {\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q9\", \"question_text\": \"A researcher applies the Fast Marching Method to study the behavior of a chemical reaction front in a heterogeneous medium. The reaction rate varies with the concentration of reactants and the local temperature. How can the Fast Marching Method effectively model this scenario?\", \"options\": {\"A\": \"By assuming a uniform reaction rate across the entire domain.\", \"B\": \"By incorporating a spatially varying reaction rate that depends on the concentration of reactants and local temperature.\", \"C\": \"By using a simpler numerical method that does not account for the heterogeneous conditions.\", \"D\": \"By focusing only on the macroscopic behavior of the reaction front, ignoring local variations.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"The Fast Marching Method can effectively model the behavior of a chemical reaction front in a heterogeneous medium by incorporating a spatially varying reaction rate. This involves using a speed function that depends on the concentration of reactants and the local temperature, allowing the method to simulate the complex behavior of the reaction front under realistic conditions.\"}, {\"subject\": \"Computer Science\", \"term\": \"Fast Marching Method\", \"question_id\": \"Q10\", \"question_text\": \"In using the Fast Marching Method for image segmentation, what role does the speed function play, and how does it influence the segmentation result?\", \"options\": {\"A\": \"The speed function is used to smooth the image, reducing noise before segmentation.\", \"B\": \"The speed function determines the propagation speed of the front based on image features, influencing the segmentation boundary.\", \"C\": \"The speed function is constant across the image, simplifying the computation.\", \"D\": \"The speed function is used to threshold the image, separating objects from the background.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"In the context of image segmentation using the Fast Marching Method, the speed function plays a crucial role in determining the propagation speed of the front based on image features. This function influences the segmentation boundary by controlling how quickly the front moves through different regions of the image, allowing for the accurate delineation of objects based on their features.\"}]",
+          "orig_subject": "Computer Science"
+        },
+        {
+          "term": "Evaluation",
+          "subject": "Mathematics",
+          "definition": "Evaluation in computer science refers to the process of assessing the quality, performance, or effectiveness of a system, algorithm, or model. It involves comparing the output of a system with the expected output or benchmark. Evaluation is crucial in ensuring that a system meets the required standards.",
+          "keyPoints_str": "Assesses the quality or performance of a system||Involves comparing output with expected output or benchmark||Crucial in ensuring a system meets required standards||Helps in identifying areas for improvement",
+          "example": "The evaluation of a machine learning model showed that it had a high accuracy rate.",
+          "objective_qa_json": "[{\"question\": \"What is evaluation purpose?\", \"answer\": \"Assess performance\"}, {\"question\": \"Is evaluation continuous?\", \"answer\": \"True\"}, {\"question\": \"What is evaluation type?\", \"answer\": \"Formative Summative\"}, {\"question\": \"Who conducts evaluation?\", \"answer\": \"Evaluator\"}, {\"question\": \"What is evaluation goal?\", \"answer\": \"Improve quality\"}, {\"question\": \"Is evaluation mandatory?\", \"answer\": \"False\"}, {\"question\": \"What is evaluation basis?\", \"answer\": \"Criteria\"}]",
+          "descriptive_qa_json": "[{\"question\": \"What is the importance of evaluation?\", \"answer\": \"Evaluation is crucial as it helps in assessing the performance and effectiveness of a process, project, or program. It provides valuable insights and feedback that can be used to improve and make informed decisions.\"}, {\"question\": \"What are the types of evaluation?\", \"answer\": \"There are two main types of evaluation: formative and summative. Formative evaluation is an ongoing process that takes place during the project or program, while summative evaluation occurs at the end of the project or program.\"}, {\"question\": \"How is evaluation conducted?\", \"answer\": \"Evaluation is conducted by collecting and analyzing data, which can be quantitative or qualitative. The data is then used to assess the performance and effectiveness of the project or program and to identify areas for improvement.\"}, {\"question\": \"What are the benefits of evaluation?\", \"answer\": \"The benefits of evaluation include improved decision-making, increased accountability, and enhanced performance. Evaluation helps to identify strengths and weaknesses, and provides a basis for future planning and development.\"}, {\"question\": \"What is the role of feedback in evaluation?\", \"answer\": \"Feedback plays a crucial role in evaluation as it provides an opportunity for stakeholders to express their opinions and concerns. Feedback can be used to identify areas for improvement and to make adjustments to the project or program.\"}]",
+          "quiz_data_json": "[{\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q1\", \"question_text\": \"A software development team is evaluating the performance of their newly developed application. They conducted a series of tests and found that the application's response time is within the acceptable range for 95% of the test cases. However, the application crashes on the remaining 5% of the test cases. What is the best approach for the team to evaluate the application's reliability?\", \"options\": {\"A\": \"Conduct more tests to increase the sample size and reduce the margin of error.\", \"B\": \"Analyze the crash reports to identify the root cause of the crashes and fix the underlying issues.\", \"C\": \"Compare the application's performance with that of similar applications in the market.\", \"D\": \"Use a reliability metric such as Mean Time Between Failures (MTBF) to quantify the application's reliability.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"The team should analyze the crash reports to identify the root cause of the crashes and fix the underlying issues. This approach will help the team to address the reliability concerns and improve the application's overall performance. By fixing the root causes, the team can reduce the number of crashes and increase the application's reliability.\"}, {\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q2\", \"question_text\": \"A researcher is evaluating the effectiveness of a machine learning model for image classification. The model achieves an accuracy of 90% on the training dataset but only 80% on the testing dataset. What is the most likely reason for this discrepancy?\", \"options\": {\"A\": \"Overfitting, as the model is too complex and has learned the noise in the training data.\", \"B\": \"Underfitting, as the model is too simple and has not captured the underlying patterns in the data.\", \"C\": \"The testing dataset is too small and does not represent the population accurately.\", \"D\": \"The model has not been trained for a sufficient number of iterations.\"}, \"correct_answer_key\": \"A\", \"explanation\": \"The discrepancy between the training and testing accuracy is likely due to overfitting, where the model has learned the noise in the training data and is not generalizing well to new, unseen data. This is a common problem in machine learning, especially when the model is complex and the training dataset is limited. Regularization techniques or early stopping can help mitigate overfitting.\"}, {\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q3\", \"question_text\": \"A company is evaluating the security of their web application and has conducted a penetration testing exercise. The test revealed several vulnerabilities, including a SQL injection vulnerability. What is the most effective way to evaluate the risk associated with this vulnerability?\", \"options\": {\"A\": \"Use a risk assessment framework such as NIST or ISO 27001 to evaluate the likelihood and impact of the vulnerability.\", \"B\": \"Conduct a cost-benefit analysis to determine the cost of fixing the vulnerability versus the potential cost of a breach.\", \"C\": \"Use a vulnerability scanner to identify the vulnerability and estimate its severity.\", \"D\": \"Consult with a security expert to get their opinion on the risk associated with the vulnerability.\"}, \"correct_answer_key\": \"A\", \"explanation\": \"Using a risk assessment framework such as NIST or ISO 27001 is the most effective way to evaluate the risk associated with the SQL injection vulnerability. These frameworks provide a structured approach to evaluating the likelihood and impact of a vulnerability, and help organizations prioritize remediation efforts. By using a risk assessment framework, the company can evaluate the risk associated with the vulnerability and make informed decisions about remediation.\"}, {\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q4\", \"question_text\": \"A developer is evaluating the performance of their application's database queries. They have identified a query that is taking a long time to execute and are considering several options to optimize it. Which of the following options is the most effective way to evaluate the query's performance?\", \"options\": {\"A\": \"Use a query analyzer tool to examine the query's execution plan and identify bottlenecks.\", \"B\": \"Run the query multiple times and calculate the average execution time to account for variability.\", \"C\": \"Compare the query's performance with that of similar queries in the application.\", \"D\": \"Use a database indexing technique to improve the query's performance.\"}, \"correct_answer_key\": \"A\", \"explanation\": \"Using a query analyzer tool is the most effective way to evaluate the query's performance. A query analyzer tool can help the developer examine the query's execution plan, identify bottlenecks, and optimize the query for better performance. By analyzing the execution plan, the developer can identify the root cause of the performance issue and make targeted optimizations.\"}, {\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q5\", \"question_text\": \"A team is evaluating the usability of their newly developed user interface. They have conducted a series of user testing sessions and gathered feedback from participants. What is the most effective way to evaluate the usability of the interface?\", \"options\": {\"A\": \"Use a usability metric such as the System Usability Scale (SUS) to quantify the interface's usability.\", \"B\": \"Conduct a heuristic evaluation to identify usability issues and areas for improvement.\", \"C\": \"Compare the interface's usability with that of similar interfaces in the market.\", \"D\": \"Use a user experience (UX) design framework to guide the evaluation and identify areas for improvement.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"Conducting a heuristic evaluation is the most effective way to evaluate the usability of the interface. A heuristic evaluation involves examining the interface against a set of established usability principles, such as clarity, consistency, and feedback. By conducting a heuristic evaluation, the team can identify usability issues and areas for improvement, and make targeted design changes to improve the interface's usability.\"}, {\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q6\", \"question_text\": \"A researcher is evaluating the effectiveness of a natural language processing (NLP) model for sentiment analysis. The model achieves an accuracy of 85% on a benchmark dataset. What is the most important factor to consider when evaluating the model's performance?\", \"options\": {\"A\": \"The model's accuracy on a specific dataset.\", \"B\": \"The model's ability to generalize to new, unseen data.\", \"C\": \"The model's computational complexity and scalability.\", \"D\": \"The model's interpretability and explainability.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"The model's ability to generalize to new, unseen data is the most important factor to consider when evaluating its performance. A model that achieves high accuracy on a benchmark dataset but fails to generalize to new data is not effective in real-world applications. The researcher should evaluate the model's performance on a variety of datasets and scenarios to ensure its generalizability and robustness.\"}, {\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q7\", \"question_text\": \"A company is evaluating the scalability of their cloud-based application. They have conducted a series of load testing exercises and found that the application's performance degrades significantly at high loads. What is the most effective way to evaluate the application's scalability?\", \"options\": {\"A\": \"Use a scalability metric such as the cloud scalability model to quantify the application's scalability.\", \"B\": \"Conduct a horizontal scaling exercise to add more resources and evaluate the application's performance.\", \"C\": \"Use a queuing theory model to analyze the application's performance under different loads.\", \"D\": \"Conduct a vertical scaling exercise to increase the resources of a single instance and evaluate the application's performance.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"Conducting a horizontal scaling exercise is the most effective way to evaluate the application's scalability. Horizontal scaling involves adding more resources, such as servers or containers, to the application to increase its capacity. By conducting a horizontal scaling exercise, the company can evaluate the application's performance under different loads and determine its scalability limitations.\"}, {\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q8\", \"question_text\": \"A developer is evaluating the maintainability of their codebase. They have identified several areas of the code that are complex and difficult to understand. What is the most effective way to evaluate the maintainability of the codebase?\", \"options\": {\"A\": \"Use a maintainability metric such as the Halstead complexity measures to quantify the code's complexity.\", \"B\": \"Conduct a code review to identify areas of the code that are complex and difficult to understand.\", \"C\": \"Use a refactoring technique to simplify the code and improve its maintainability.\", \"D\": \"Use a testing framework to evaluate the code's test coverage and identify areas for improvement.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"Conducting a code review is the most effective way to evaluate the maintainability of the codebase. A code review involves examining the code carefully and identifying areas that are complex, difficult to understand, or prone to errors. By conducting a code review, the developer can identify areas for improvement and make targeted changes to simplify the code and improve its maintainability.\"}, {\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q9\", \"question_text\": \"A team is evaluating the energy efficiency of their data center. They have conducted a series of measurements and found that the data center's power usage effectiveness (PUE) is higher than expected. What is the most effective way to evaluate the energy efficiency of the data center?\", \"options\": {\"A\": \"Use a energy efficiency metric such as the data center infrastructure efficiency (DCiE) to quantify the data center's energy efficiency.\", \"B\": \"Conduct a energy audit to identify areas of the data center that are wasting energy.\", \"C\": \"Use a simulation model to evaluate the data center's energy efficiency under different scenarios.\", \"D\": \"Compare the data center's energy efficiency with that of similar data centers in the industry.\"}, \"correct_answer_key\": \"B\", \"explanation\": \"Conducting an energy audit is the most effective way to evaluate the energy efficiency of the data center. An energy audit involves examining the data center's energy usage and identifying areas where energy is being wasted. By conducting an energy audit, the team can identify areas for improvement and make targeted changes to reduce energy consumption and improve the data center's energy efficiency.\"}, {\"subject\": \"Computer Science\", \"term\": \"Evaluation\", \"question_id\": \"Q10\", \"question_text\": \"A researcher is evaluating the fairness of a machine learning model for predicting loan approvals. The model has been found to be biased against certain groups of people. What is the most effective way to evaluate the fairness of the model?\", \"options\": {\"A\": \"Use a fairness metric such as the disparate impact ratio to quantify the model's bias.\", \"B\": \"Conduct a sensitivity analysis to evaluate the model's performance under different scenarios.\", \"C\": \"Use a debiasing technique to remove the bias from the model.\", \"D\": \"Compare the model's performance with that of other models that have been found to be fair.\"}, \"correct_answer_key\": \"A\", \"explanation\": \"Using a fairness metric such as the disparate impact ratio is the most effective way to evaluate the fairness of the model. A fairness metric can help the researcher quantify the model's bias and identify areas where the model is unfair. By using a fairness metric, the researcher can evaluate the model's fairness and make targeted changes to remove the bias and improve the model's performance.\"}]",
+          "orig_subject": "Statistics"
+        }
+      ]
+    },
+    "test_attempts": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "test_id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "started_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "finished_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "answers_json",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "score",
+          "type": "REAL",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'in-progress'",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "saved_tests",
+          "from": "test_id",
+          "to": "id",
+          "on_update": "NO ACTION",
+          "on_delete": "NO ACTION",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [],
+      "sample_data": []
+    },
+    "test_questions": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "test_id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "term",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "question_json",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "seq",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "saved_tests",
+          "from": "test_id",
+          "to": "id",
+          "on_update": "NO ACTION",
+          "on_delete": "NO ACTION",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_test_questions_test_id",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        }
+      ],
+      "sample_data": []
+    },
+    "user_activity_log": {
+      "row_count": 1,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "event_type",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "event_subtype",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "term_key",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "subject",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "payload",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_activity_user_time",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        }
+      ],
+      "sample_data": [
+        {
+          "id": 1,
+          "user_id": "local",
+          "event_type": "view_term",
+          "event_subtype": null,
+          "term_key": "Gravity",
+          "subject": "Physics",
+          "payload": "{\"source\": \"test\"}",
+          "created_at": "2025-11-24T18:58:33.795955"
+        }
+      ]
+    },
+    "user_collections": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "term_keys",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "sample_data": []
+    },
+    "user_prefs": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "pref_key",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "pref_value",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_user_prefs_1",
+          "unique": 1,
+          "origin": "u",
+          "partial": 0
+        }
+      ],
+      "sample_data": []
+    },
+    "user_sessions": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "session_token",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "started_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "ended_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "duration_seconds",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "device_info",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "synced",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": "0",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "sample_data": []
+    },
+    "user_settings": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "key",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "value",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": "CURRENT_TIMESTAMP",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_user_settings_1",
+          "unique": 1,
+          "origin": "u",
+          "partial": 0
+        }
+      ],
+      "sample_data": []
+    },
+    "user_term_meta": {
+      "row_count": 0,
+      "schema": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": true
+        },
+        {
+          "name": "term",
+          "type": "TEXT",
+          "not_null": true,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'local'",
+          "primary_key": false
+        },
+        {
+          "name": "favorite",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": "0",
+          "primary_key": false
+        },
+        {
+          "name": "bookmark",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": "0",
+          "primary_key": false
+        },
+        {
+          "name": "difficulty",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'unknown'",
+          "primary_key": false
+        },
+        {
+          "name": "rating",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": "0",
+          "primary_key": false
+        },
+        {
+          "name": "read_status",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "'to-read'",
+          "primary_key": false
+        },
+        {
+          "name": "personal_tags",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "''",
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "not_null": false,
+          "default_value": "''",
+          "primary_key": false
+        },
+        {
+          "name": "last_viewed",
+          "type": "TIMESTAMP",
+          "not_null": false,
+          "default_value": null,
+          "primary_key": false
+        },
+        {
+          "name": "important_level",
+          "type": "INTEGER",
+          "not_null": false,
+          "default_value": "0",
+          "primary_key": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_user_term_meta_bookmark",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "idx_user_term_meta_favorite",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 2,
+          "name": "idx_user_term_meta_term",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 3,
+          "name": "sqlite_autoindex_user_term_meta_1",
+          "unique": 1,
+          "origin": "u",
+          "partial": 0
+        }
+      ],
+      "sample_data": []
+    }
+  }
+}

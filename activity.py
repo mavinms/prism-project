@@ -370,3 +370,283 @@ def term_group():
     except Exception as e:
         current_app.logger.exception("term_group failed")
         return jsonify({'error': str(e)}), 500
+    
+
+
+    # ------------------------------------------------------------------
+# USER PREFERENCES ENDPOINTS (Theme, Font, Settings)
+# ------------------------------------------------------------------
+
+@activity_bp.route('/api/preferences', methods=['GET'])
+def get_preferences():
+    """Get all user preferences"""
+    user_id = request.args.get('user_id', 'local')
+    try:
+        conn = get_db_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT preference_key, preference_value, updated_at 
+            FROM user_preferences 
+            WHERE user_id = ?
+        """, (user_id,))
+        rows = cur.fetchall()
+        
+        # Convert to dict format
+        prefs = {}
+        for row in rows:
+            prefs[row['preference_key']] = row['preference_value']
+        
+        conn.close()
+        return jsonify(prefs)
+    except Exception as e:
+        current_app.logger.exception("get_preferences failed")
+        return jsonify({'error': str(e)}), 500
+
+@activity_bp.route('/api/preferences', methods=['POST'])
+def save_preference():
+    """Save or update a single preference"""
+    data = request.get_json(force=True)
+    user_id = _json_field(data, 'user_id', 'local')
+    key = _json_field(data, 'key')
+    value = _json_field(data, 'value')
+    
+    if not key:
+        return jsonify({'error': 'key required'}), 400
+    
+    try:
+        conn = get_db_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO user_preferences (user_id, preference_key, preference_value, updated_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_id, preference_key) DO UPDATE SET
+                preference_value = excluded.preference_value,
+                updated_at = excluded.updated_at
+        """, (user_id, key, str(value), now_iso()))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        current_app.logger.exception("save_preference failed")
+        return jsonify({'error': str(e)}), 500
+
+@activity_bp.route('/api/preferences/batch', methods=['POST'])
+def save_preferences_batch():
+    """Save multiple preferences at once"""
+    data = request.get_json(force=True)
+    user_id = _json_field(data, 'user_id', 'local')
+    preferences = _json_field(data, 'preferences', {})
+    
+    if not preferences:
+        return jsonify({'error': 'preferences object required'}), 400
+    
+    try:
+        conn = get_db_conn()
+        cur = conn.cursor()
+        timestamp = now_iso()
+        
+        for key, value in preferences.items():
+            cur.execute("""
+                INSERT INTO user_preferences (user_id, preference_key, preference_value, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id, preference_key) DO UPDATE SET
+                    preference_value = excluded.preference_value,
+                    updated_at = excluded.updated_at
+            """, (user_id, key, str(value), timestamp))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'count': len(preferences)})
+    except Exception as e:
+        current_app.logger.exception("save_preferences_batch failed")
+        return jsonify({'error': str(e)}), 500
+
+# ------------------------------------------------------------------
+# RECENT TERMS ENDPOINTS (Session History)
+# ------------------------------------------------------------------
+
+@activity_bp.route('/api/recent-terms', methods=['GET'])
+def get_recent_terms():
+    """Get recent terms viewed by user (limited to last N)"""
+    user_id = request.args.get('user_id', 'local')
+    limit = int(request.args.get('limit', 10))
+    
+    try:
+        conn = get_db_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT term, subject, viewed_at 
+            FROM user_recent_terms 
+            WHERE user_id = ?
+            ORDER BY viewed_at DESC
+            LIMIT ?
+        """, (user_id, limit))
+        rows = cur.fetchall()
+        
+        terms = []
+        for row in rows:
+            terms.append({
+                'term': row['term'],
+                'subject': row['subject'],
+                'viewed_at': row['viewed_at']
+            })
+        
+        conn.close()
+        return jsonify(terms)
+    except Exception as e:
+        current_app.logger.exception("get_recent_terms failed")
+        return jsonify({'error': str(e)}), 500
+
+@activity_bp.route('/api/recent-terms', methods=['POST'])
+def add_recent_term():
+    """Add a term to recent history"""
+    data = request.get_json(force=True)
+    user_id = _json_field(data, 'user_id', 'local')
+    term = _json_field(data, 'term')
+    subject = _json_field(data, 'subject')
+    
+    if not term:
+        return jsonify({'error': 'term required'}), 400
+    
+    try:
+        conn = get_db_conn()
+        cur = conn.cursor()
+        
+        # Add new recent term
+        cur.execute("""
+            INSERT INTO user_recent_terms (user_id, term, subject, viewed_at)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, term, subject, now_iso()))
+        
+        # Keep only last 50 recent terms (auto-cleanup)
+        cur.execute("""
+            DELETE FROM user_recent_terms 
+            WHERE user_id = ? 
+            AND id NOT IN (
+                SELECT id FROM user_recent_terms 
+                WHERE user_id = ? 
+                ORDER BY viewed_at DESC 
+                LIMIT 50
+            )
+        """, (user_id, user_id))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        current_app.logger.exception("add_recent_term failed")
+        return jsonify({'error': str(e)}), 500
+
+@activity_bp.route('/api/recent-terms', methods=['DELETE'])
+def clear_recent_terms():
+    """Clear all recent terms for user"""
+    user_id = request.args.get('user_id', 'local')
+    
+    try:
+        conn = get_db_conn()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM user_recent_terms WHERE user_id = ?", (user_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        current_app.logger.exception("clear_recent_terms failed")
+        return jsonify({'error': str(e)}), 500
+
+# ------------------------------------------------------------------
+# COMPREHENSIVE STATISTICS ENDPOINT (All from DB)
+# ------------------------------------------------------------------
+
+@activity_bp.route('/api/stats/complete', methods=['GET'])
+def get_complete_stats():
+    """Get all statistics from database (no localStorage needed)"""
+    user_id = request.args.get('user_id', 'local')
+    
+    try:
+        conn = get_db_conn()
+        cur = conn.cursor()
+        
+        stats = {}
+        
+        # Total terms in database
+        cur.execute("SELECT COUNT(*) as cnt FROM terms_data")
+        stats['total_terms'] = cur.fetchone()['cnt']
+        
+        # User term metadata counts
+        cur.execute("""
+            SELECT
+                SUM(CASE WHEN favorite = 1 THEN 1 ELSE 0 END) as favorites,
+                SUM(CASE WHEN bookmark = 1 THEN 1 ELSE 0 END) as bookmarks,
+                SUM(CASE WHEN notes IS NOT NULL AND notes != '' THEN 1 ELSE 0 END) as with_notes,
+                SUM(CASE WHEN difficulty = 'easy' THEN 1 ELSE 0 END) as easy,
+                SUM(CASE WHEN difficulty = 'medium' THEN 1 ELSE 0 END) as medium,
+                SUM(CASE WHEN difficulty = 'hard' THEN 1 ELSE 0 END) as hard
+            FROM user_term_meta 
+            WHERE user_id = ?
+        """, (user_id,))
+        meta_counts = cur.fetchone()
+        stats['favorites'] = meta_counts['favorites'] or 0
+        stats['bookmarks'] = meta_counts['bookmarks'] or 0
+        stats['with_notes'] = meta_counts['with_notes'] or 0
+        stats['easy'] = meta_counts['easy'] or 0
+        stats['medium'] = meta_counts['medium'] or 0
+        stats['hard'] = meta_counts['hard'] or 0
+        
+        # Recent terms count (this session)
+        cur.execute("""
+            SELECT COUNT(*) as cnt 
+            FROM user_recent_terms 
+            WHERE user_id = ?
+        """, (user_id,))
+        stats['recent_terms'] = cur.fetchone()['cnt']
+        
+        # Collections count
+        cur.execute("""
+            SELECT COUNT(*) as cnt 
+            FROM user_collections 
+            WHERE user_id = ?
+        """, (user_id,))
+        stats['collections'] = cur.fetchone()['cnt']
+        
+        # Homework count
+        cur.execute("""
+            SELECT COUNT(*) as cnt 
+            FROM homework 
+            WHERE user_id = ?
+        """, (user_id,))
+        stats['homework'] = cur.fetchone()['cnt']
+        
+        # Total views from aggregates
+        cur.execute("""
+            SELECT SUM(views) as total 
+            FROM term_view_aggregates 
+            WHERE user_id = ?
+        """, (user_id,))
+        result = cur.fetchone()
+        stats['total_views'] = result['total'] if result['total'] else 0
+        
+        # Most viewed terms (top 5)
+        cur.execute("""
+            SELECT term, views, last_viewed 
+            FROM term_view_aggregates 
+            WHERE user_id = ?
+            ORDER BY views DESC 
+            LIMIT 5
+        """, (user_id,))
+        stats['top_terms'] = [dict(row) for row in cur.fetchall()]
+        
+        # Subject distribution
+        cur.execute("""
+            SELECT subject, views 
+            FROM subject_view_aggregates 
+            WHERE user_id = ?
+            ORDER BY views DESC
+        """, (user_id,))
+        stats['subject_distribution'] = [dict(row) for row in cur.fetchall()]
+        
+        conn.close()
+        return jsonify(stats)
+        
+    except Exception as e:
+        current_app.logger.exception("get_complete_stats failed")
+        return jsonify({'error': str(e)}), 500

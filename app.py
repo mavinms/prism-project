@@ -2,11 +2,13 @@ import os
 import sys
 import json
 import sqlite3
-from flask import Flask, send_from_directory, request, jsonify
+from flask import Flask, send_from_directory, request, jsonify, g # ADDED 'g'
 from datetime import datetime
 import atexit
+from activity import activity_bp
 
 app = Flask(__name__)
+app.register_blueprint(activity_bp)
 
 # Ensure clean shutdown
 def cleanup():
@@ -26,15 +28,30 @@ else:
 
 DB_PATH = os.path.join(BASE_DIR, 'prism.sqlite')
 
-def get_db():
+# --- NEW RAW CONNECTION HELPER (Used by init_db only) ---
+def _get_raw_db_conn(row_factory=None):
+    """Creates a direct SQLite connection (non-Flask context aware)."""
     if not os.path.exists(DB_PATH):
         print(f"ERROR: Database not found at {DB_PATH}")
         return None
-    return sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH)
+    if row_factory:
+        conn.row_factory = row_factory
+    return conn
+
+# --- MODIFIED: FLASK CONTEXT AWARE GETTER ---
+def get_db():
+    """Gets the request-local database connection, creating it if necessary."""
+    if 'db' not in g:
+        # Connect and set row_factory for column name access
+        g.db = _get_raw_db_conn(sqlite3.Row)
+        
+    return g.db
 
 def init_db():
     """Initialize new tables for enhanced features"""
-    db = get_db()
+    # Use the raw connection function here as it's outside a request context
+    db = _get_raw_db_conn() 
     if not db:
         return
     
@@ -103,6 +120,18 @@ def init_db():
 # Initialize database on startup
 init_db()
 
+# --- NEW: Teardown function to close DB after each request ---
+def close_db(e=None):
+    """Closes the database connection at the end of the request."""
+    db = g.pop('db', None)
+
+    if db is not None:
+        db.close()
+
+app.teardown_appcontext(close_db)
+# -----------------------------------------------------------
+
+
 @app.route('/')
 def index():
     return send_from_directory('web', 'index.html')
@@ -121,9 +150,11 @@ def get_all_terms():
         cursor = db.cursor()
         cursor.execute("SELECT term, subject FROM terms_data ORDER BY subject, term")
         rows = cursor.fetchall()
-        db.close()
         
-        terms = [{'term': row[0], 'subject': row[1]} for row in rows]
+        # Removed db.close()
+        
+        # Accessing by index for compatibility, though row['term'] would also work now
+        terms = [{'term': row[0], 'subject': row[1]} for row in rows] 
         return jsonify(terms)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -144,7 +175,7 @@ def get_subjects():
             ORDER BY subject
         """)
         rows = cursor.fetchall()
-        db.close()
+        # Removed db.close()
         
         subjects = [{'subject': row[0], 'count': row[1]} for row in rows]
         return jsonify(subjects)
@@ -170,7 +201,7 @@ def get_terms_by_subject(subject):
             ORDER BY term
         """, (subject,))
         rows = cursor.fetchall()
-        db.close()
+        # Removed db.close()
         
         terms = [{'term': row[0], 'subject': row[1]} for row in rows]
         return jsonify(terms)
@@ -190,20 +221,20 @@ def get_term_data(term_name):
         cursor = db.cursor()
         cursor.execute("""
             SELECT term, subject, definition, keyPoints_str, example, 
-                   objective_qa_json, descriptive_qa_json, quiz_data_json
+                    objective_qa_json, descriptive_qa_json, quiz_data_json
             FROM terms_data WHERE term = ?
         """, (term_name,))
         
         row = cursor.fetchone()
         
         if not row:
-            db.close()
+            # Removed db.close()
             return jsonify({'error': f'Term "{term_name}" not found in database'}), 404
         
         # Get metadata
         cursor.execute("""
             SELECT favorite, bookmark, difficulty, rating, read_status, 
-                   personal_tags, notes, last_viewed
+                    personal_tags, notes, last_viewed
             FROM user_term_meta 
             WHERE term = ? AND user_id = 'local'
         """, (term_name,))
@@ -227,7 +258,7 @@ def get_term_data(term_name):
             datetime.now().isoformat()
         ))
         db.commit()
-        db.close()
+        # Removed db.close()
         
         keyPoints = [p.strip() for p in row[3].split('||') if p.strip()] if row[3] else []
         
@@ -274,7 +305,7 @@ def save_term_meta():
         # Get existing meta
         cursor.execute("""
             SELECT favorite, bookmark, difficulty, rating, read_status, 
-                   personal_tags, notes
+                    personal_tags, notes
             FROM user_term_meta 
             WHERE term = ? AND user_id = ?
         """, (term, user_id))
@@ -298,7 +329,7 @@ def save_term_meta():
               personal_tags, notes, datetime.now().isoformat()))
         
         db.commit()
-        db.close()
+        # Removed db.close()
         
         return jsonify({'success': True})
     except Exception as e:
@@ -319,13 +350,13 @@ def get_term_meta(term):
         cursor = db.cursor()
         cursor.execute("""
             SELECT favorite, bookmark, difficulty, rating, read_status, 
-                   personal_tags, notes, last_viewed
+                    personal_tags, notes, last_viewed
             FROM user_term_meta 
             WHERE term = ? AND user_id = ?
         """, (term, user_id))
         
         row = cursor.fetchone()
-        db.close()
+        # Removed db.close()
         
         if row:
             return jsonify({
@@ -371,7 +402,7 @@ def create_test():
         
         test_id = cursor.lastrowid
         db.commit()
-        db.close()
+        # Removed db.close()
         
         return jsonify({'success': True, 'test_id': test_id})
     except Exception as e:
@@ -429,7 +460,7 @@ def generate_test_questions(test_id):
                 # Get term data
                 cursor.execute("""
                     SELECT objective_qa_json, descriptive_qa_json, quiz_data_json,
-                           definition, keyPoints_str, example
+                            definition, keyPoints_str, example
                     FROM terms_data WHERE term = ?
                 """, (term,))
                 term_data = cursor.fetchone()
@@ -471,7 +502,7 @@ def generate_test_questions(test_id):
                     seq += 1
         
         db.commit()
-        db.close()
+        # Removed db.close()
         
         return jsonify({'success': True, 'questions_generated': seq})
     except Exception as e:
@@ -492,7 +523,7 @@ def get_tests():
             ORDER BY created_at DESC
         """)
         rows = cursor.fetchall()
-        db.close()
+        # Removed db.close()
         
         tests = [{
             'id': row[0],
@@ -541,7 +572,7 @@ def get_stats_overview():
         cursor.execute("SELECT COUNT(*) FROM saved_tests")
         tests_count = cursor.fetchone()[0]
         
-        db.close()
+        # Removed db.close()
         
         return jsonify({
             'total_terms': total_terms,
@@ -579,7 +610,7 @@ def get_meta_counts():
         cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE difficulty = 'medium'")
         medium_count = cursor.fetchone()[0]
         
-        db.close()
+        # Removed db.close()
         
         return jsonify({
             'with_notes': notes_count,
@@ -601,12 +632,12 @@ def get_all_metadata():
         cursor = db.cursor()
         cursor.execute("""
             SELECT term, favorite, bookmark, difficulty, rating, 
-                   CASE WHEN notes = '' THEN 0 ELSE 1 END as has_notes
+                    CASE WHEN notes = '' THEN 0 ELSE 1 END as has_notes
             FROM user_term_meta
         """)
         
         rows = cursor.fetchall()
-        db.close()
+        # Removed db.close()
         
         metadata = [{
             'term': row[0],
@@ -665,11 +696,11 @@ def filter_by_metadata(filter_type, param=None):
                 ORDER BY t.term
             """, (param,))
         else:
-            db.close()
+            # Removed db.close()
             return jsonify({'error': 'Invalid filter type'}), 400
         
         rows = cursor.fetchall()
-        db.close()
+        # Removed db.close()
         
         terms = [{'term': row[0], 'subject': row[1]} for row in rows]
         return jsonify(terms)

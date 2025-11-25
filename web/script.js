@@ -4,18 +4,64 @@ let currentView = 'discover';
 let currentTerm = null;
 let sessionTerms = 0;
 let allSubjects = [];
-let userCollections = JSON.parse(localStorage.getItem('userCollections') || '[]');
-let tickerStopped = localStorage.getItem('tickerStopped') === 'true';
+let userCollections = []; // Loaded from database via loadCollections()
+
 
 // Initialize app
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load user preferences from database FIRST
+    try {
+        const response = await fetch('/api/preferences?user_id=local');
+        if (response.ok) {
+            const prefs = await response.json();
+            
+            // Apply theme
+            if (prefs.theme === 'dark') {
+                document.body.classList.add('dark');
+                const themeIcon = document.querySelector('.theme-icon');
+                if (themeIcon) themeIcon.textContent = '☀️';
+            }
+            
+            // Apply font
+            if (prefs.font) {
+                document.body.style.fontFamily = prefs.font;
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) mainContent.style.fontFamily = prefs.font;
+                const termContent = document.getElementById('termContent');
+                if (termContent) termContent.style.fontFamily = prefs.font;
+                const fontSelect = document.getElementById('fontSelect');
+                if (fontSelect) fontSelect.value = prefs.font;
+            } else {
+                // Set default font to Nunito
+                const defaultFont = "'Nunito', sans-serif";
+                document.body.style.fontFamily = defaultFont;
+                const fontSelect = document.getElementById('fontSelect');
+                if (fontSelect) fontSelect.value = defaultFont;
+            }
+            
+            // Apply font size
+            if (prefs.fontSize) {
+                document.body.style.fontSize = prefs.fontSize + 'px';
+            }
+            
+            console.log('✓ Preferences loaded from database');
+        }
+    } catch (error) {
+        console.error('Failed to load preferences:', error);
+        // Fallback to defaults
+        const defaultFont = "'Nunito', sans-serif";
+        document.body.style.fontFamily = defaultFont;
+        const fontSelect = document.getElementById('fontSelect');
+        if (fontSelect) fontSelect.value = defaultFont;
+    }
+
+    // Now load the rest of the app
     loadTerms();
-    setupEventListeners()
+    setupEventListeners();
     loadHomework();
     updateStats();
     loadCollections();
-    initializeTicker();
-    startClock();
+       startClock();
 });
 
 // Start clock with online/offline support
@@ -127,25 +173,7 @@ function displayClock(date) {
     }
 }
 
-// Initialize copyright ticker
-function initializeTicker() {
-    const ticker = document.getElementById('copyrightTicker');
-    if (!ticker) return;
 
-    if (tickerStopped) {
-        ticker.classList.add('stopped');
-    } else {
-        // Start immediately unless user had previously stopped the ticker
-        ticker.classList.add('running');
-        ticker.classList.remove('stopped');
-    }
-
-    ticker.addEventListener('click', () => {
-        ticker.classList.toggle('stopped');
-        tickerStopped = ticker.classList.contains('stopped');
-        localStorage.setItem('tickerStopped', tickerStopped);
-    });
-}
 
 
 // Load all terms
@@ -524,14 +552,14 @@ function displaySearchResults(results, metadata = []) {
 // View term detail with Indian timestamp
 async function viewTerm(termName) {
     showLoading();
-    sessionTerms++;
-    window.sessionTerms = sessionTerms;   // << ADD THIS LINE
-    document.getElementById('sessionTermsCount').textContent = sessionTerms;
 
     try {
         const response = await fetch(`/api/term/${encodeURIComponent(termName)}`);
         const data = await response.json();
         currentTerm = data;
+
+        // Save to recent terms in database
+        await addRecentTerm(data.term, data.subject);
 
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById('termView').classList.add('active');
@@ -878,24 +906,8 @@ async function saveTermMeta(data) {
 
 // History tracking
 function trackHistory(action) {
-    const history = JSON.parse(localStorage.getItem('termHistory') || '[]');
-
-    const entry = {
-        term: currentTerm.term,
-        subject: currentTerm.subject,
-        action: getActionDescription(action),
-        timestamp: new Date().toISOString(),
-        details: action
-    };
-
-    history.unshift(entry); // Add to beginning
-
-    // Keep last 500 entries
-    if (history.length > 500) {
-        history.length = 500;
-    }
-
-    localStorage.setItem('termHistory', JSON.stringify(history));
+    // History tracked in database via user_activity_log table - no local tracking needed
+    return; // Early return - all tracking done via API calls
 }
 
 function getActionDescription(action) {
@@ -908,88 +920,161 @@ function getActionDescription(action) {
 }
 
 // Show history modal
-function showHistoryModal() {
-    const history = JSON.parse(localStorage.getItem('termHistory') || '[]');
+// Show history modal
+async function showHistoryModal() {
+    try {
+        // Fetch recent terms from database
+        const response = await fetch('/api/recent-terms?user_id=local&limit=100');
+        const history = response.ok ? await response.json() : [];
 
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    modal.id = 'historyModal';
-    modal.innerHTML = `
-        <div class="modal-content large">
-            <div class="modal-header">
-                <h3>Activity History</h3>
-                <button class="close-btn" onclick="closeHistoryModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="history-filters">
-                    <button onclick="filterHistory('hour')" class="filter-btn">Last Hour</button>
-                    <button onclick="filterHistory('day')" class="filter-btn">Today</button>
-                    <button onclick="filterHistory('week')" class="filter-btn">This Week</button>
-                    <button onclick="filterHistory('month')" class="filter-btn">This Month</button>
-                    <button onclick="filterHistory('all')" class="filter-btn active">All Time</button>
-                    <button onclick="clearHistory('all')" class="danger-btn">Clear All</button>
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'historyModal';
+        modal.innerHTML = `
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3>Activity History</h3>
+                    <button class="close-btn" onclick="closeHistoryModal()">&times;</button>
                 </div>
-                <div id="historyList" class="history-list">
-                    ${renderHistoryList(history)}
+                <div class="modal-body">
+                    <div class="history-filters">
+                        <button onclick="filterHistory('hour')" class="filter-btn">Last Hour</button>
+                        <button onclick="filterHistory('day')" class="filter-btn">Today</button>
+                        <button onclick="filterHistory('week')" class="filter-btn">This Week</button>
+                        <button onclick="filterHistory('month')" class="filter-btn">This Month</button>
+                        <button onclick="filterHistory('all')" class="filter-btn active">All Time</button>
+                        <button onclick="clearHistory('all')" class="danger-btn">Clear All</button>
+                    </div>
+                    <div id="historyList" class="history-list">
+                        ${renderHistoryList(history)}
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
+        `;
+        document.body.appendChild(modal);
+    } catch (error) {
+        console.error('Failed to load history:', error);
+    }
 }
 
 function renderHistoryList(entries) {
-    if (entries.length === 0) {
+    if (!entries || entries.length === 0) {
         return '<p class="empty-state">No history yet</p>';
     }
 
     return entries.map((entry, idx) => `
         <div class="history-item">
             <div class="history-main">
-                <span class="history-term" onclick="closeHistoryModal(); viewTerm('${escapeHtml(entry.term)}')">${escapeHtml(entry.term)}</span>
-                <span class="history-action">${entry.action}</span>
+                <span class="history-term" onclick="closeHistoryModal(); viewTerm('${escapeHtml(entry.term)}')">
+                    ${escapeHtml(entry.term)}
+                </span>
+                ${entry.subject ? `<span class="history-subject">${escapeHtml(entry.subject)}</span>` : ''}
             </div>
             <div class="history-meta">
-                <span class="history-subject">${escapeHtml(entry.subject)}</span>
-                <span class="history-time">${formatIndianTime(entry.timestamp)}</span>
+                <span class="history-time">${formatIndianTime(entry.viewed_at)}</span>
             </div>
         </div>
     `).join('');
 }
 
-function filterHistory(period) {
-    const history = JSON.parse(localStorage.getItem('termHistory') || '[]');
-    const now = new Date();
-    let filtered = history;
+async function filterHistory(period) {
+    try {
+        // Get recent terms from database
+        const response = await fetch('/api/recent-terms?user_id=local&limit=100');
+        if (!response.ok) return;
+        
+        const history = await response.json();
+        const now = new Date();
+        let filtered = history;
 
-    if (period === 'hour') {
-        const hourAgo = new Date(now - 60 * 60 * 1000);
-        filtered = history.filter(h => new Date(h.timestamp) > hourAgo);
-    } else if (period === 'day') {
-        const dayStart = new Date(now.setHours(0, 0, 0, 0));
-        filtered = history.filter(h => new Date(h.timestamp) > dayStart);
-    } else if (period === 'week') {
-        const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-        filtered = history.filter(h => new Date(h.timestamp) > weekAgo);
-    } else if (period === 'month') {
-        const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
-        filtered = history.filter(h => new Date(h.timestamp) > monthAgo);
+        if (period === 'hour') {
+            const hourAgo = new Date(now - 60 * 60 * 1000);
+            filtered = history.filter(h => new Date(h.viewed_at) > hourAgo);
+        } else if (period === 'day') {
+            const dayStart = new Date(now.setHours(0, 0, 0, 0));
+            filtered = history.filter(h => new Date(h.viewed_at) > dayStart);
+        } else if (period === 'week') {
+            const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+            filtered = history.filter(h => new Date(h.viewed_at) > weekAgo);
+        } else if (period === 'month') {
+            const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+            filtered = history.filter(h => new Date(h.viewed_at) > monthAgo);
+        }
+
+        renderHistory(filtered);
+    } catch (error) {
+        console.error('Failed to filter history:', error);
     }
-
-    document.getElementById('historyList').innerHTML = renderHistoryList(filtered);
-
-    // Update active button
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
 }
 
-function clearHistory(period) {
+// Update stats from database
+async function updateStats() {
+    try {
+        const response = await fetch('/api/stats/complete?user_id=local');
+        if (!response.ok) return;
+        
+        const stats = await response.json();
+        
+        // Update sidebar counters
+        const totalTermsCount = document.getElementById('totalTermsCount');
+        const favCount = document.getElementById('favCount');
+        const bookCount = document.getElementById('bookCount');
+        const notesCount = document.getElementById('notesCount');
+        const easyCount = document.getElementById('easyCount');
+        const mediumCount = document.getElementById('mediumCount');
+        const hardCount = document.getElementById('hardCount');
+        const sessionTermsCount = document.getElementById('sessionTermsCount');
+        
+        if (totalTermsCount) totalTermsCount.textContent = stats.total_terms || 0;
+        if (favCount) favCount.textContent = stats.favorites || 0;
+        if (bookCount) bookCount.textContent = stats.bookmarks || 0;
+        if (notesCount) notesCount.textContent = stats.with_notes || 0;
+        if (easyCount) easyCount.textContent = stats.easy || 0;
+        if (mediumCount) mediumCount.textContent = stats.medium || 0;
+        if (hardCount) hardCount.textContent = stats.hard || 0;
+        if (sessionTermsCount) sessionTermsCount.textContent = stats.recent_terms || 0;
+        
+    } catch (error) {
+        console.error('Failed to update stats:', error);
+    }
+}
+
+// Add term to recent history in database
+async function addRecentTerm(term, subject) {
+    try {
+        await fetch('/api/recent-terms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: 'local',
+                term: term,
+                subject: subject
+            })
+        });
+        // Update session count
+        updateStats();
+    } catch (error) {
+        console.error('Failed to save recent term:', error);
+    }
+}
+
+async function clearHistory(period) {
     if (!confirm(`Clear ${period === 'all' ? 'all' : period} history?`)) return;
 
     if (period === 'all') {
-        localStorage.setItem('termHistory', '[]');
-        showNotification('All history cleared');
-        closeHistoryModal();
+        try {
+            const response = await fetch('/api/recent-terms?user_id=local', {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                showNotification('All history cleared');
+                closeHistoryModal();
+                updateStats(); // Refresh stats
+            }
+        } catch (error) {
+            console.error('Failed to clear history:', error);
+            showNotification('Failed to clear history');
+        }
     }
 }
 
@@ -1086,7 +1171,7 @@ function createCollectionFromLevels() {
     };
 
     userCollections.push(collection);
-    localStorage.setItem('userCollections', JSON.stringify(userCollections));
+   // Collections auto-saved to database via API
     closeCollectionModal();
     showNotification(`Created and added to "${name}"`);
 }
@@ -1097,7 +1182,7 @@ function addTermToCollection(collectionIndex) {
     const collection = userCollections[collectionIndex];
     if (!collection.terms.includes(currentTerm.term)) {
         collection.terms.push(currentTerm.term);
-        localStorage.setItem('userCollections', JSON.stringify(userCollections));
+       // Collections auto-saved to database via API
         showNotification(`Added to "${collection.name}"`);
     } else {
         showNotification('Already in this list');
@@ -1110,8 +1195,19 @@ function closeCollectionModal() {
     if (modal) modal.remove();
 }
 
-function loadCollections() {
-    userCollections = JSON.parse(localStorage.getItem('userCollections') || '[]');
+async function loadCollections() {
+    try {
+        const response = await fetch('/api/collections?user_id=local');
+        if (response.ok) {
+            userCollections = await response.json();
+            renderCollectionsView();
+        } else {
+            userCollections = [];
+        }
+    } catch (error) {
+        console.error('Failed to load collections:', error);
+        userCollections = [];
+    }
 }
 
 // Render Collections View with elegant UI
@@ -1221,7 +1317,7 @@ function createNewCollection() {
     };
 
     userCollections.push(collection);
-    localStorage.setItem('userCollections', JSON.stringify(userCollections));
+    // Collections auto-saved to database via API
     document.getElementById('createCollectionModal').remove();
     showNotification(`Collection "${name}" created!`);
     renderCollectionsView();
@@ -1279,7 +1375,7 @@ function saveCollectionEdit(index) {
 
     userCollections[index].name = name;
     userCollections[index].levels = levels;
-    localStorage.setItem('userCollections', JSON.stringify(userCollections));
+   // Collections auto-saved to database via API
 
     document.getElementById('editCollectionModal').remove();
     showNotification('Collection updated!');
@@ -1330,7 +1426,7 @@ function viewCollection(index) {
 function removeFromCollection(collectionIndex, termName) {
     const collection = userCollections[collectionIndex];
     collection.terms = collection.terms.filter(t => t !== termName);
-    localStorage.setItem('userCollections', JSON.stringify(userCollections));
+    // Collections auto-saved to database via API
     viewCollection(collectionIndex);
     showNotification('Term removed from collection');
 }
@@ -1338,7 +1434,7 @@ function removeFromCollection(collectionIndex, termName) {
 function deleteCollection(index) {
     if (confirm(`Delete "${userCollections[index].name}"?`)) {
         userCollections.splice(index, 1);
-        localStorage.setItem('userCollections', JSON.stringify(userCollections));
+        // Collections auto-saved to database via API
         renderCollectionsView();
         showNotification('Collection deleted');
     }
@@ -1437,28 +1533,38 @@ async function renderStatsView() {
 }
 
 // Homework functions
-function loadHomework() {
-    const homework = JSON.parse(localStorage.getItem('homework') || '[]');
-    const container = document.getElementById('homeworkList');
-
-    if (homework.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No homework added yet</p></div>';
-        return;
+async function loadHomework() {
+    try {
+        const response = await fetch('/api/homework?user_id=local');
+        const homework = response.ok ? await response.json() : [];
+        
+        const container = document.getElementById('homeworkList');
+        
+        if (homework.length === 0) {
+            container.innerHTML = '<div class="empty-state"><p>No homework added yet</p></div>';
+            return;
+        }
+        
+        container.innerHTML = homework.map((hw, i) => `
+            <div class="homework-item">
+                <div class="homework-header">
+                    <h3 class="homework-title">${escapeHtml(hw.term)}</h3>
+                    <span class="homework-date">${hw.date}</span>
+                </div>
+                ${hw.notes ? `<p class="homework-notes">${escapeHtml(hw.notes)}</p>` : ''}
+                <div class="homework-actions">
+                    <button onclick="viewTerm('${escapeHtml(hw.term)}')" class="primary-btn compact">View Term</button>
+                    <button onclick="deleteHomework(${i})" class="secondary-btn compact">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load homework:', error);
+        const container = document.getElementById('homeworkList');
+        if (container) {
+            container.innerHTML = '<div class="empty-state"><p>No homework added yet</p></div>';
+        }
     }
-
-    container.innerHTML = homework.map((hw, i) => `
-        <div class="homework-item">
-            <div class="homework-header">
-                <h3 class="homework-title">${escapeHtml(hw.term)}</h3>
-                <span class="homework-date">${hw.date}</span>
-            </div>
-            ${hw.notes ? `<p class="homework-notes">${escapeHtml(hw.notes)}</p>` : ''}
-            <div class="homework-actions">
-                <button onclick="viewTerm('${escapeHtml(hw.term)}')" class="primary-btn compact">View Term</button>
-                <button onclick="deleteHomework(${i})" class="secondary-btn compact">Delete</button>
-            </div>
-        </div>
-    `).join('');
 }
 
 function handleHwSearch(e) {
@@ -1467,9 +1573,9 @@ function handleHwSearch(e) {
         document.getElementById('hwSuggestions').innerHTML = '';
         return;
     }
-
+    
     const results = allTerms.filter(t => t.term.toLowerCase().includes(query)).slice(0, 5);
-
+    
     document.getElementById('hwSuggestions').innerHTML = results.map(t => `
         <div class="suggestion-item" onclick="selectHwTerm('${escapeHtml(t.term)}')">
             <span class="suggestion-term">${escapeHtml(t.term)}</span>
@@ -1477,7 +1583,6 @@ function handleHwSearch(e) {
         </div>
     `).join('');
 }
-
 function selectHwTerm(term) {
     document.getElementById('hwTermInput').value = term;
     document.getElementById('hwSuggestions').innerHTML = '';
@@ -1493,9 +1598,9 @@ function saveHomework() {
         return;
     }
 
-    const homework = JSON.parse(localStorage.getItem('homework') || '[]');
+    
     homework.push({ term, date, notes, added: new Date().toISOString() });
-    localStorage.setItem('homework', JSON.stringify(homework));
+   
 
     document.getElementById('homeworkModal').classList.remove('active');
     document.getElementById('hwTermInput').value = '';
@@ -1509,9 +1614,9 @@ function saveHomework() {
 function deleteHomework(index) {
     if (!confirm('Delete this homework?')) return;
 
-    const homework = JSON.parse(localStorage.getItem('homework') || '[]');
+  
     homework.splice(index, 1);
-    localStorage.setItem('homework', JSON.stringify(homework));
+  
     loadHomework();
     showNotification('Homework deleted');
 }
@@ -1537,36 +1642,78 @@ function hideLoading() {
     document.getElementById('loadingOverlay').classList.remove('active');
 }
 
-function toggleTheme() {
+async function toggleTheme() {
     document.body.classList.toggle('dark');
-    const icon = document.querySelector('.theme-icon');
-    icon.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
-    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    const isDark = document.body.classList.contains('dark');
+    document.querySelector('.theme-icon').textContent = isDark ? '☀️' : '🌙';
+    
+    // Save to database immediately
+    try {
+        await fetch('/api/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: 'local',
+                key: 'theme',
+                value: isDark ? 'dark' : 'light'
+            })
+        });
+    } catch (error) {
+        console.error('Failed to save theme:', error);
+    }
 }
 
-function changeFont() {
+async function changeFont() {
     const font = document.getElementById('fontSelect').value;
-    // Apply to both body and main content for consistent styling
+    // Apply to both body and main content
     document.body.style.fontFamily = font;
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
         mainContent.style.fontFamily = font;
     }
-    // Also apply to term content area
     const termContent = document.getElementById('termContent');
     if (termContent) {
         termContent.style.fontFamily = font;
     }
-    localStorage.setItem('font', font);
-    console.log('✓ Font changed to:', font);
+    
+    // Save to database immediately
+    try {
+        await fetch('/api/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: 'local',
+                key: 'font',
+                value: font
+            })
+        });
+        console.log('✓ Font saved to database:', font);
+    } catch (error) {
+        console.error('Failed to save font:', error);
+    }
 }
 
-function changeFontSize(delta) {
+async function changeFontSize(delta) {
     const currentSize = parseFloat(getComputedStyle(document.body).fontSize);
     const newSize = Math.max(12, Math.min(24, currentSize + delta));
     document.body.style.fontSize = newSize + 'px';
-    localStorage.setItem('fontSize', newSize);
+    
+    // Save to database immediately
+    try {
+        await fetch('/api/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: 'local',
+                key: 'fontSize',
+                value: newSize
+            })
+        });
+    } catch (error) {
+        console.error('Failed to save font size:', error);
+    }
 }
+
 
 async function exitApp() {
     if (confirm('Are you sure you want to exit?')) {
@@ -1577,39 +1724,7 @@ async function exitApp() {
     }
 }
 
-// Load saved preferences
-window.addEventListener('load', () => {
-    const theme = localStorage.getItem('theme');
-    if (theme === 'dark') {
-        document.body.classList.add('dark');
-        document.querySelector('.theme-icon').textContent = '☀️';
-    }
 
-   const font = localStorage.getItem('font');
-if (font) {
-    document.body.style.fontFamily = font;
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        mainContent.style.fontFamily = font;
-    }
-    const termContent = document.getElementById('termContent');
-    if (termContent) {
-        termContent.style.fontFamily = font;
-    }
-    document.getElementById('fontSelect').value = font;
-} else {
-    // Set default font to Nunito if none selected
-    const defaultFont = "'Nunito', sans-serif";
-    document.body.style.fontFamily = defaultFont;
-    document.getElementById('fontSelect').value = defaultFont;
-    localStorage.setItem('font', defaultFont);
-}
-
-    const fontSize = localStorage.getItem('fontSize');
-    if (fontSize) {
-        document.body.style.fontSize = fontSize + 'px';
-    }
-});
 // ---- APPEND-ONLY: ensure clock starts even if DOMContentLoaded was missed ----
 // Paste this at the very end of /mnt/data/script.js (append only; do not remove any existing lines)
 (function ensureClockStartedAppendOnly() {
@@ -1684,78 +1799,8 @@ if (font) {
         }
     }
 
-    // --- TICKER controller (non-destructive)
-    function ensureTickerControls() {
-        const ticker = document.getElementById('copyrightTicker');
-        if (!ticker) return;
 
-        // create control button (small, unobtrusive) if not present
-        if (!document.getElementById('tickerControlBtn')) {
-            const btn = document.createElement('button');
-            btn.id = 'tickerControlBtn';
-            btn.title = 'Pause / Play Ticker';
-            btn.setAttribute('aria-label', 'Pause or resume copyright ticker');
-            btn.className = 'ticker-control-btn';
-            // append to top-right of page
-            ticker.style.position = 'fixed';
-            ticker.appendChild(btn);
-
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation(); // don't fire the ticker click handler accidentally
-                const stopped = ticker.classList.toggle('stopped');
-                localStorage.setItem('tickerStopped', stopped ? 'true' : 'false');
-                // if stopped, center; if resumed, ensure running class applied
-                if (!stopped && ticker.classList.contains('running') === false) {
-                    // small delay to let CSS reflow
-                    setTimeout(() => ticker.classList.add('running'), 50);
-                }
-                updateTickerControlUI(btn, stopped);
-            });
-
-            // initial UI
-            updateTickerControlUI(btn, ticker.classList.contains('stopped') || tickerStopped);
-        }
-
-        // Delayed start: remove animation until delay passes (uses CSS override in appended style)
-        // We store "running" state in localStorage too so user preference persists.
-        setTimeout(() => {
-            const persistedStopped = localStorage.getItem('tickerStopped') === 'true';
-            if (!persistedStopped) {
-                ticker.classList.add('running'); // starts animation via CSS override
-                ticker.classList.remove('stopped');
-            } else {
-                ticker.classList.remove('running');
-                ticker.classList.add('stopped');
-            }
-        }, TICKER_DELAY_MS);
-
-        // Also ensure a click on the ticker itself toggles stop / start (keeps current behavior)
-        ticker.addEventListener('click', () => {
-            // click-to-toggle should center on stopped state (existing CSS uses .stopped)
-            const isStopped = ticker.classList.toggle('stopped');
-            if (isStopped) {
-                ticker.classList.remove('running');
-            } else {
-                ticker.classList.add('running');
-            }
-            localStorage.setItem('tickerStopped', isStopped ? 'true' : 'false');
-            const btn = document.getElementById('tickerControlBtn');
-            if (btn) updateTickerControlUI(btn, isStopped);
-        });
-    }
-
-    function updateTickerControlUI(btn, stopped) {
-        btn.textContent = stopped ? '▶' : '⏸';
-        btn.title = stopped ? 'Resume ticker' : 'Pause ticker';
-        btn.style.fontSize = '12px';
-        btn.style.padding = '4px 8px';
-        btn.style.marginLeft = '8px';
-        btn.style.border = 'none';
-        btn.style.background = 'rgba(255,255,255,0.08)';
-        btn.style.color = 'white';
-        btn.style.borderRadius = '6px';
-        btn.style.cursor = 'pointer';
-    }
+   
 
     // --- Stats auto-refresh (keeps UI in sync with DB-driven endpoints)
     async function refreshAllCountsOnce() {
@@ -1841,13 +1886,7 @@ if (font) {
 
     // wire up when the DOM is ready (non-destructive)
     function init() {
-        try {
-            ensureTickerControls(); // adds delayed running and control
-        } catch (e) {
-            console.warn('Ticker ensure failed', e);
-        }
-
-        try {
+             try {
             pollCountsPeriodically(); // keeps UI counts in sync with DB
         } catch (e) {
             console.warn('Stats poll failed', e);
@@ -1882,34 +1921,8 @@ if (font) {
         setTimeout(init, 50);
     }
 
-})();
-/* ---- APPEND-ONLY: Immediate ticker start, full-print, full-page screenshot, dev-cards-top ---- */
-(function prismPrintScreenshotTickerAppend() {
-    // ---------- 1. Ensure ticker starts immediately (no delay) ----------
-    try {
-        const startTickerImmediately = () => {
-            const ticker = document.getElementById('copyrightTicker');
-            if (!ticker) return;
-            // If user previously chose to stop ticker, respect that
-            const stopped = localStorage.getItem('tickerStopped') === 'true';
-            if (!stopped) ticker.classList.add('running'); // start animation immediately
-            // keep existing click-to-toggle behavior intact (non-destructive)
-            ticker.addEventListener('click', () => {
-                const nowStopped = ticker.classList.toggle('stopped');
-                if (nowStopped) ticker.classList.remove('running'); else ticker.classList.add('running');
-                localStorage.setItem('tickerStopped', nowStopped ? 'true' : 'false');
-            });
-        };
 
-        // call as soon as possible
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', startTickerImmediately);
-        } else {
-            startTickerImmediately();
-        }
-    } catch (e) {
-        console.warn('Ticker immediate start failed', e);
-    }
+
 
     // ---------- 2. Full-page print of main content only (no sidebar) ----------
     function printMainContent() {
