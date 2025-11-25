@@ -6,7 +6,6 @@ from flask import Flask, send_from_directory, request, jsonify, g # ADDED 'g'
 from datetime import datetime
 import atexit
 from activity import activity_bp
-
 app = Flask(__name__)
 app.register_blueprint(activity_bp)
 

@@ -64,6 +64,38 @@ document.addEventListener('DOMContentLoaded', async () => {
        startClock();
 });
 
+// Update stats from database
+async function updateStats() {
+    try {
+        const response = await fetch('/api/stats/complete?user_id=local');
+        if (!response.ok) return;
+        
+        const stats = await response.json();
+        
+        // Update sidebar counters
+        const totalTermsCount = document.getElementById('totalTermsCount');
+        const favCount = document.getElementById('favCount');
+        const bookCount = document.getElementById('bookCount');
+        const notesCount = document.getElementById('notesCount');
+        const easyCount = document.getElementById('easyCount');
+        const mediumCount = document.getElementById('mediumCount');
+        const hardCount = document.getElementById('hardCount');
+        const sessionTermsCount = document.getElementById('sessionTermsCount');
+        
+        if (totalTermsCount) totalTermsCount.textContent = stats.total_terms || 0;
+        if (favCount) favCount.textContent = stats.favorites || 0;
+        if (bookCount) bookCount.textContent = stats.bookmarks || 0;
+        if (notesCount) notesCount.textContent = stats.with_notes || 0;
+        if (easyCount) easyCount.textContent = stats.easy || 0;
+        if (mediumCount) mediumCount.textContent = stats.medium || 0;
+        if (hardCount) hardCount.textContent = stats.hard || 0;
+        if (sessionTermsCount) sessionTermsCount.textContent = stats.recent_terms || 0;
+        
+    } catch (error) {
+        console.error('Failed to update stats:', error);
+    }
+}
+
 // Start clock with online/offline support
 function startClock() {
     // First, show system time immediately
@@ -1007,37 +1039,7 @@ async function filterHistory(period) {
     }
 }
 
-// Update stats from database
-async function updateStats() {
-    try {
-        const response = await fetch('/api/stats/complete?user_id=local');
-        if (!response.ok) return;
-        
-        const stats = await response.json();
-        
-        // Update sidebar counters
-        const totalTermsCount = document.getElementById('totalTermsCount');
-        const favCount = document.getElementById('favCount');
-        const bookCount = document.getElementById('bookCount');
-        const notesCount = document.getElementById('notesCount');
-        const easyCount = document.getElementById('easyCount');
-        const mediumCount = document.getElementById('mediumCount');
-        const hardCount = document.getElementById('hardCount');
-        const sessionTermsCount = document.getElementById('sessionTermsCount');
-        
-        if (totalTermsCount) totalTermsCount.textContent = stats.total_terms || 0;
-        if (favCount) favCount.textContent = stats.favorites || 0;
-        if (bookCount) bookCount.textContent = stats.bookmarks || 0;
-        if (notesCount) notesCount.textContent = stats.with_notes || 0;
-        if (easyCount) easyCount.textContent = stats.easy || 0;
-        if (mediumCount) mediumCount.textContent = stats.medium || 0;
-        if (hardCount) hardCount.textContent = stats.hard || 0;
-        if (sessionTermsCount) sessionTermsCount.textContent = stats.recent_terms || 0;
-        
-    } catch (error) {
-        console.error('Failed to update stats:', error);
-    }
-}
+
 
 // Add term to recent history in database
 async function addRecentTerm(term, subject) {
