@@ -1,0 +1,13 @@
+# 1. Ignore Python compiled files/environments (standard)
+__pycache__/
+*.pyc
+/venv/
+.env
+
+# 2. Ignore BUILD and DISTRIBUTION directories (where .pkg is)
+/build/
+/dist/
+*.pkg
+
+# 3. CRUCIAL: Ignore all large SQLite database files
+*.sqlite

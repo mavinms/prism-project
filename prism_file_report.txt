@@ -1,0 +1,41 @@
+=================================================================
+== PRISM PROJECT FILE SCAN REPORT FOR GIT ANALYSIS ==
+== Generated: 2025-11-25 21:36:09 ==
+=================================================================
+
+## 1. SUMMARY OF PROJECT SIZE ##
+-----------------------------------------------------------------
+  Total Size of **TRACKABLE** Code/Text Files (Recommended for Git): 734.21 MB
+  Total Size of **IGNORED** Binary/Large/Temp Files: 27.95 MB
+-----------------------------------------------------------------
+
+## 2. FILE TYPE EXTENSION BREAKDOWN ##
+ (Sorted by size, largest file types first)
+-----------------------------------------------------------------
+| Extension       |  Count   |    Total Size   | LFS Needed |
+|-----------------|----------|-----------------|------------|
+| .sqlite         |        3 |       713.68 MB |    YES     |
+| [IGNORED_FILES] |        8 |        27.95 MB |     No     |
+| .pkg            |        1 |        13.02 MB |    YES     |
+| .pyz            |        1 |         5.23 MB |     No     |
+| .html           |        3 |      1019.26 KB |     No     |
+| .js             |        4 |       569.58 KB |     No     |
+| .woff2          |        2 |       220.81 KB |     No     |
+| .toc            |        4 |       191.61 KB |     No     |
+| .jpg            |        2 |       148.28 KB |     No     |
+| .css            |        2 |       112.04 KB |     No     |
+| .py             |        3 |        43.45 KB |     No     |
+| .ico            |        3 |        12.12 KB |     No     |
+| .txt            |        2 |        10.86 KB |     No     |
+| .bat            |        1 |         1.04 KB |     No     |
+| .spec           |        1 |           739 B |     No     |
+-----------------------------------------------------------------
+
+## 3. LARGE FILES (>= 10MB) LIST ##
+ (These files should be tracked using **Git LFS** if they are needed)
+-----------------------------------------------------------------
+      237.90 MB | prism.sqlite
+      237.90 MB | dist\prism.sqlite
+      237.88 MB | dist\working.v.1\prism.sqlite
+       13.02 MB | build\Prism\Prism.pkg
+-----------------------------------------------------------------
