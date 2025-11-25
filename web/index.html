@@ -1,213 +1,414 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRISM - Personalized & Progressive Resource-Intelligent Study Module</title>
     <link rel="stylesheet" href="/web/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700&family=Lora:wght@400;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700&family=Lora:wght@400;600&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Offline fonts for sidebar -->
+    <style>
+        /* Nunito Font Family - Offline */
+        @font-face {
+            font-family: 'Nunito';
+            src: url('/web/fonts/Nunito/Nunito-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Nunito';
+            src: url('/web/fonts/Nunito/Nunito-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Nunito';
+            src: url('/web/fonts/Nunito/Nunito-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Nunito';
+            src: url('/web/fonts/Nunito/Nunito-ExtraBold.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* Poppins Font Family - Offline */
+        @font-face {
+            font-family: 'Poppins';
+            src: url('/web/fonts/Poppins/Poppins-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Poppins';
+            src: url('/web/fonts/Poppins/Poppins-Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Poppins';
+            src: url('/web/fonts/Poppins/Poppins-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Poppins';
+            src: url('/web/fonts/Poppins/Poppins-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+    </style>
 
     <!-- Small inline styles for the developer photos (keeps change local to this file; optional to move into style.css) -->
     <style>
-      /* Vertical developer thumbnails in the left sidebar footer */
-      .dev-photos {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-top: 6px;
-        align-items: center;
-        padding: 6px 8px 8px 8px;
-        border-top: 1px dashed rgba(0,0,0,0.04);
-      }
-      
-      .dev-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        padding: 4px;
-        border-radius: 8px;
-      }
-      
-      .dev-item:hover {
-        transform: translateY(-2px);
-        background: rgba(99, 102, 241, 0.05);
-      }
-      
-      .dev-photos img {
-        width: 90px;
-        height: 90px;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 3px solid rgba(99, 102, 241, 0.5);
-        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
-        display: block;
-        transition: all 0.3s ease;
-        animation: float 3s ease-in-out infinite;
-      }
-      
-      .dev-item:nth-child(2) img {
-        animation-delay: 0.5s;
-        border-color: rgba(168, 85, 247, 0.5);
-      }
-      
-      .dev-item:hover img {
-        transform: scale(1.08) rotate(3deg);
-        box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
-        border-width: 4px;
-      }
-      
-      @keyframes float {
-        0%, 100% {
-          transform: translateY(0px);
+        /* Smooth font styling for sidebar only */
+        .sidebar,
+        .sidebar * {
+            font-family: 'Nunito', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            text-rendering: optimizeLegibility !important;
         }
-        50% {
-          transform: translateY(-4px);
-        }
-      }
-      
-      .dev-photos .dev-caption {
-        font-size: 12px;
-        font-weight: 700;
-        color: #4f46e5;
-        text-align: center;
-        line-height: 1.3;
-        transition: all 0.3s ease;
-        margin-top: 2px;
-        text-shadow: 0 0 1px rgba(79, 70, 229, 0.3);
-      }
-      
-      .dev-item:hover .dev-caption {
-        color: #7c3aed;
-        transform: scale(1.08);
-        text-shadow: 0 0 2px rgba(124, 58, 237, 0.5);
-      }
-      
-      /* Compact sidebar elements to avoid scrollbar */
-      .sidebar {
-        padding: 12px 10px 8px 10px !important;
-        gap: 6px !important;
-      }
-      
-      .brand {
-        padding: 6px !important;
-        margin-bottom: 4px !important;
-      }
-      
-      .brand h1 {
-        font-size: 20px !important;
-        margin-bottom: 2px !important;
-      }
-      
-      .brand-tagline {
-        font-size: 8.5px !important;
-        line-height: 1.2 !important;
-      }
-      
-      .brand-icon {
-        font-size: 28px !important;
-      }
-      
-      .live-clock {
-        padding: 5px !important;
-        font-size: 10px !important;
-        margin-bottom: 5px !important;
-      }
-      
-      .quick-stats {
-        gap: 5px !important;
-        margin-bottom: 6px !important;
-      }
-      
-      .stat-mini {
-        padding: 5px !important;
-      }
-      
-      .stat-icon {
-        font-size: 16px !important;
-      }
-      
-      .stat-value {
-        font-size: 14px !important;
-      }
-      
-      .stat-label {
-        font-size: 8.5px !important;
-      }
-      
-      .main-nav {
-        gap: 2px !important;
-        margin-bottom: 6px !important;
-      }
-      
-      .nav-btn {
-        padding: 5px 8px !important;
-        font-size: 11.5px !important;
-        min-height: 34px !important;
-      }
-      
-      .nav-icon {
-        font-size: 14px !important;
-      }
-      
-      .quick-access {
-        padding: 6px !important;
-        margin-bottom: 6px !important;
-      }
-      
-      .quick-access-header {
-        font-size: 10px !important;
-        padding: 3px 0 !important;
-        margin-bottom: 3px !important;
-      }
-      
-      .quick-access-btn {
-        padding: 4px 7px !important;
-        font-size: 10.5px !important;
-        min-height: 28px !important;
-        margin-bottom: 2px !important;
-      }
-      
-      .quick-icon {
-        font-size: 12px !important;
-      }
-      
-      .quick-count {
-        font-size: 9px !important;
-        min-width: 18px !important;
-        height: 18px !important;
-        line-height: 18px !important;
-      }
-      
-      .quick-divider {
-        font-size: 9px !important;
-        padding: 3px 0 2px !important;
-        margin: 3px 0 !important;
-      }
-      
-      .sidebar-footer {
-        margin-top: 6px !important;
-        padding-top: 6px !important;
-      }
-      
-      .developer-credit {
-        font-size: 9px !important;
-        padding: 4px !important;
-        margin-bottom: 3px !important;
-        line-height: 1.3 !important;
-      }
 
-      /* responsive tweak for very small screens */
-      @media (max-width: 540px) {
-        .dev-photos img { width: 70px; height: 70px; }
-        .dev-photos .dev-caption { font-size: 11px; }
-      }
+        .brand h1 {
+            font-family: 'Poppins', sans-serif !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        .brand-tagline {
+            font-family: 'Nunito', sans-serif !important;
+            font-weight: 500 !important;
+        }
+
+        .nav-btn,
+        .quick-access-btn {
+            font-family: 'Nunito', sans-serif !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.3px !important;
+        }
+
+        .stat-value {
+            font-family: 'Poppins', sans-serif !important;
+            font-weight: 700 !important;
+        }
+
+        .stat-label,
+        .quick-access-header,
+        .quick-divider {
+            font-family: 'Nunito', sans-serif !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        .developer-credit,
+        .dev-caption {
+            font-family: 'Nunito', sans-serif !important;
+            font-weight: 600 !important;
+        }
+
+        .live-clock,
+        .connection-status {
+            font-family: 'Poppins', sans-serif !important;
+            font-weight: 500 !important;
+        }
+
+        /* Fix app-container height to account for fixed footer (38px footer + padding) */
+        .app-container {
+            height: calc(100vh - 42px) !important;
+        }
+
+        /* Horizontal developer thumbnails (smaller to save space) */
+        .dev-photos {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            margin-top: 6px;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 8px 4px 8px;
+            border-top: 1px dashed rgba(0, 0, 0, 0.04);
+        }
+
+        .dev-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 3px;
+            border-radius: 8px;
+        }
+
+        .dev-item:hover {
+            transform: translateY(-2px);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .dev-photos img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid rgba(99, 102, 241, 0.5);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            display: block;
+            transition: all 0.3s ease;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .dev-item:nth-child(2) img {
+            animation-delay: 0.5s;
+            border-color: rgba(168, 85, 247, 0.5);
+        }
+
+        .dev-item:hover img {
+            transform: scale(1.05) rotate(3deg);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+            border-width: 3px;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-3px);
+            }
+        }
+
+        .dev-photos .dev-caption {
+            font-size: 10px;
+            font-weight: 700;
+            color: #4f46e5;
+            text-align: center;
+            line-height: 1.2;
+            transition: all 0.3s ease;
+            margin-top: 1px;
+            text-shadow: 0 0 1px rgba(79, 70, 229, 0.3);
+        }
+
+        .dev-item:hover .dev-caption {
+            color: #7c3aed;
+            transform: scale(1.05);
+            text-shadow: 0 0 2px rgba(124, 58, 237, 0.5);
+        }
+
+        /* Online/Offline Status Indicator */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px !important;
+            margin: 5px 0 !important;
+            font-size: 11px !important;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 6px;
+            justify-content: center;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.online {
+            background: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .status-label {
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .status-label.online {
+            color: #10b981;
+        }
+
+        .status-label.offline {
+            color: #ef4444;
+        }
+
+        /* Better spacing and larger fonts for sidebar */
+        .sidebar {
+            padding: 16px 14px !important;
+            gap: 8px !important;
+        }
+
+        .brand {
+            padding: 8px !important;
+            margin-bottom: 8px !important;
+        }
+
+        .brand h1 {
+            font-size: 26px !important;
+            margin-bottom: 4px !important;
+        }
+
+        .brand-tagline {
+            font-size: 10.5px !important;
+            line-height: 1.4 !important;
+        }
+
+        .brand-icon {
+            font-size: 36px !important;
+        }
+
+        .live-clock {
+            padding: 6px !important;
+            font-size: 11px !important;
+            margin-bottom: 6px !important;
+        }
+
+        .quick-stats {
+            gap: 8px !important;
+            margin-bottom: 10px !important;
+            padding: 12px !important;
+        }
+
+        .stat-mini {
+            padding: 6px !important;
+        }
+
+        .stat-icon {
+            font-size: 18px !important;
+        }
+
+        .stat-value {
+            font-size: 16px !important;
+        }
+
+        .stat-label {
+            font-size: 9.5px !important;
+        }
+
+        .main-nav {
+            gap: 4px !important;
+            margin-bottom: 10px !important;
+        }
+
+        .nav-btn {
+            padding: 7px 10px !important;
+            font-size: 13px !important;
+            min-height: 38px !important;
+        }
+
+        .nav-icon {
+            font-size: 16px !important;
+        }
+
+        .quick-access {
+            padding: 8px !important;
+            margin-bottom: 8px !important;
+            margin-top: 12px !important;
+            padding-top: 12px !important;
+        }
+
+        .quick-access-header {
+            font-size: 10.5px !important;
+            padding: 4px 0 !important;
+            margin-bottom: 6px !important;
+        }
+
+        .quick-access-btn {
+            padding: 6px 8px !important;
+            font-size: 11.5px !important;
+            min-height: 32px !important;
+            margin-bottom: 4px !important;
+        }
+
+        .quick-icon {
+            font-size: 14px !important;
+        }
+
+        .quick-count {
+            font-size: 10px !important;
+            min-width: 20px !important;
+            height: 20px !important;
+            line-height: 20px !important;
+        }
+
+        .quick-divider {
+            font-size: 10px !important;
+            padding: 4px 0 3px !important;
+            margin: 4px 0 !important;
+        }
+
+        .sidebar-footer {
+            margin-top: 0px !important;
+            padding-top: 8px !important;
+            border-top: 1px solid var(--border);
+        }
+
+        .developer-credit {
+            font-size: 10.5px !important;
+            padding: 6px !important;
+            margin-bottom: 6px !important;
+            line-height: 1.4 !important;
+            font-weight: 500 !important;
+        }
+
+        /* responsive tweak for very small screens */
+        @media (max-width: 540px) {
+            .dev-photos img {
+                width: 70px;
+                height: 70px;
+            }
+
+            .dev-photos .dev-caption {
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
+
 <body>
-    
+
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
@@ -218,10 +419,16 @@
                     <p class="brand-tagline">Personalized & Progressive<br>Resource-Intelligent Study Module</p>
                 </div>
             </div>
-            
+
+            <!-- Online/Offline Status Indicator -->
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot offline" id="statusDot"></span>
+                <span class="status-label offline" id="statusLabel">Offline</span>
+            </div>
+
             <!-- Live Clock -->
             <div class="live-clock" id="liveClock">00:00:00 AM Monday</div>
-            
+
             <!-- Quick Stats -->
             <div class="quick-stats">
                 <div class="stat-mini">
@@ -239,7 +446,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Main Navigation -->
             <nav class="main-nav">
                 <button class="nav-btn active" data-view="discover">
@@ -275,69 +482,71 @@
                     <span>Homework</span>
                 </button>
             </nav>
-            
+
             <!-- Quick Access Section -->
             <div class="quick-access">
                 <div class="quick-access-header">Quick Access</div>
-                
+
                 <button class="quick-access-btn" id="quickFavorites">
                     <span class="quick-icon">⭐</span>
                     <span class="quick-label">Favorites</span>
                     <span class="quick-count" id="favCount">0</span>
                 </button>
-                
+
                 <button class="quick-access-btn" id="quickBookmarks">
                     <span class="quick-icon">🔖</span>
                     <span class="quick-label">Bookmarks</span>
                     <span class="quick-count" id="bookCount">0</span>
                 </button>
-                
+
                 <button class="quick-access-btn" id="quickNotes">
                     <span class="quick-icon">📝</span>
                     <span class="quick-label">With Notes</span>
                     <span class="quick-count" id="notesCount">0</span>
                 </button>
-                
+
                 <div class="quick-divider">Difficulty</div>
-                
+
                 <button class="quick-access-btn difficulty-easy" id="quickEasy">
                     <span class="quick-icon">✅</span>
                     <span class="quick-label">Easy</span>
                     <span class="quick-count" id="easyCount">0</span>
                 </button>
-                
+
                 <button class="quick-access-btn difficulty-medium" id="quickMedium">
                     <span class="quick-icon">⚠️</span>
                     <span class="quick-label">Medium</span>
                     <span class="quick-count" id="mediumCount">0</span>
                 </button>
-                
+
                 <button class="quick-access-btn difficulty-hard" id="quickHard">
                     <span class="quick-icon">🔥</span>
                     <span class="quick-label">Hard</span>
                     <span class="quick-count" id="hardCount">0</span>
                 </button>
             </div>
-            
+
             <!-- Developer Credit -->
             <div class="sidebar-footer">
                 <p class="developer-credit">For Teacher Fest 2025-26<br><strong>CFs Fatehgarh Sahib</strong></p>
 
                 <!-- Horizontal developer photos with clickable names -->
                 <div class="dev-photos" aria-label="Core developers">
-                  <div class="dev-item" onclick="navigateToDeveloper(0)">
-                    <img src="/web/images/dev1.jpg" alt="Maninder Singh - Lead Developer" title="Maninder Singh — Lead Developer & System Architect">
-                    <div>Maninder Singh</div>
-                  </div>
+                    <div class="dev-item" onclick="navigateToDeveloper(0)">
+                        <img src="/web/images/dev1.jpg" alt="Maninder Singh - Lead Developer"
+                            title="Maninder Singh — Lead Developer & System Architect">
+                        <div>Maninder Singh</div>
+                    </div>
 
-                  <div class="dev-item" onclick="navigateToDeveloper(1)">
-                    <img src="/web/images/dev2.jpg" alt="Pooja Goel - Team Coordinator" title="Pooja Goel — Team Coordinator (Project Support)">
-                    <div>Pooja Goel</div>
-                  </div>
+                    <div class="dev-item" onclick="navigateToDeveloper(1)">
+                        <img src="/web/images/dev2.jpg" alt="Pooja Goel - Team Coordinator"
+                            title="Pooja Goel — Team Coordinator (Project Support)">
+                        <div>Pooja Goel</div>
+                    </div>
                 </div>
             </div>
         </aside>
-        
+
         <!-- Main Content Area -->
         <main class="main-content">
             <!-- Toolbar -->
@@ -347,11 +556,11 @@
                         <span class="theme-icon">🌙</span>
                     </button>
                     <select id="fontSelect" class="select-input">
-                        <option value="Inter">Inter (Default)</option>
-                        <option value="Merriweather">Merriweather</option>
-                        <option value="Lora">Lora</option>
-                        <option value="Open Sans">Open Sans</option>
-                        <option value="Georgia">Georgia</option>
+                        <option value="'Nunito', sans-serif">Nunito (Smooth)</option>
+                        <option value="'Poppins', sans-serif">Poppins (Modern)</option>
+                        <option value="'Segoe UI', Tahoma, sans-serif">Segoe UI (Clean)</option>
+                        <option value="Calibri, sans-serif">Calibri (Professional)</option>
+                        <option value="Verdana, Geneva, sans-serif">Verdana (Readable)</option>
                     </select>
                     <div class="btn-group">
                         <button id="fontDecrease" class="icon-btn">A-</button>
@@ -363,7 +572,7 @@
                     <button id="exitBtn" class="exit-btn" title="Exit">✖ Exit</button>
                 </div>
             </div>
-            
+
             <!-- Content Views -->
             <div class="content-wrapper">
                 <!-- Discover View -->
@@ -372,7 +581,7 @@
                         <h2>Discover Knowledge</h2>
                         <p>Explore concepts across all subjects</p>
                     </div>
-                    
+
                     <!-- Features Showcase -->
                     <div class="features-showcase">
                         <div class="feature-card" onclick="switchView('search')">
@@ -396,7 +605,7 @@
                             <p>Works without internet</p>
                         </div>
                     </div>
-                    
+
                     <!-- Stats Showcase -->
                     <div class="stats-showcase">
                         <div class="stat-showcase-card" onclick="switchView('subjects')">
@@ -416,18 +625,18 @@
                             <div class="stat-showcase-label">Your Collections</div>
                         </div>
                     </div>
-                    
+
                     <div class="featured-section">
                         <h3>🎯 Random Terms to Explore</h3>
                         <div id="randomTerms" class="term-grid"></div>
                     </div>
-                    
+
                     <div class="subjects-preview">
                         <h3>📚 Browse by Subject</h3>
                         <div id="subjectsPreview" class="subjects-grid"></div>
                     </div>
                 </div>
-                
+
                 <!-- Features View -->
                 <div class="view" id="featuresView">
                     <div class="features-page">
@@ -435,203 +644,281 @@
                             <div class="hero-icon">🌈</div>
                             <h1>PRISM Features</h1>
                             <p class="hero-subtitle">Personalized & Progressive Resource-Intelligent Study Module</p>
-                            <p class="hero-description">A complete offline educational platform with 19298 terms across 19 subjects</p>
+                            <p class="hero-description">A complete offline educational platform with 19298 terms across
+                                19 subjects</p>
                         </div>
-                        
+
                         <div class="features-grid-full">
                             <div class="feature-box">
                                 <div class="feature-box-icon">📚</div>
                                 <h3>19,298 Terms</h3>
-                                <p>Comprehensive coverage of 19 core subjects: Like Biology, Chemistry, Computer Science, Economics, English, History, Mathematics, Physics, Political Science, Space & Astronomy, Statistics, and World Famous Personalities</p>
+                                <p>Comprehensive coverage of 19 core subjects: Like Biology, Chemistry, Computer
+                                    Science, Economics, English, History, Mathematics, Physics, Political Science, Space
+                                    & Astronomy, Statistics, and World Famous Personalities</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">🔍</div>
                                 <h3>Smart Priority Search</h3>
-                                <p>Instant search results with intelligent prioritization. Your favorited and bookmarked terms appear first. Visual badges (★ 🔖 📝) help you identify important content quickly.</p>
+                                <p>Instant search results with intelligent prioritization. Your favorited and bookmarked
+                                    terms appear first. Visual badges (★ 🔖 📝) help you identify important content
+                                    quickly.</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">📁</div>
                                 <h3>Custom Collections</h3>
-                                <p>Create unlimited study lists with 4-level hierarchy. Example: Class 10 → Biology → Genetics → DNA. Full CRUD operations: Create, Read, Update, Delete.</p>
+                                <p>Create unlimited study lists with 4-level hierarchy. Example: Class 10 → Biology →
+                                    Genetics → DNA. Full CRUD operations: Create, Read, Update, Delete.</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">⭐</div>
                                 <h3>Personalization</h3>
-                                <p>Mark favorites, add bookmarks, set difficulty levels (Easy/Medium/Hard), rate with 5 stars, and add personal notes to any term. All your preferences saved automatically.</p>
+                                <p>Mark favorites, add bookmarks, set difficulty levels (Easy/Medium/Hard), rate with 5
+                                    stars, and add personal notes to any term. All your preferences saved automatically.
+                                </p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">📜</div>
                                 <h3>Activity History</h3>
-                                <p>Track all your actions with timestamps. Filter history by hour, day, week, or month. Search through your learning journey and clear history selectively.</p>
+                                <p>Track all your actions with timestamps. Filter history by hour, day, week, or month.
+                                    Search through your learning journey and clear history selectively.</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">⚡</div>
                                 <h3>100% Offline</h3>
-                                <p>Works completely without internet. Ideal for students in areas with limited connectivity. Distribute via USB drive. Runs on old laptops.</p>
+                                <p>Works completely without internet. Ideal for students in areas with limited
+                                    connectivity. Distribute via USB drive. Runs on old laptops.</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">🎯</div>
                                 <h3>Practice Tests</h3>
-                                <p>Objective questions, descriptive questions, and multiple-choice quizzes with detailed explanations. Perfect for exam preparation.</p>
+                                <p>Objective questions, descriptive questions, and multiple-choice quizzes with detailed
+                                    explanations. Perfect for exam preparation.</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">📝</div>
                                 <h3>Homework Manager</h3>
-                                <p>Assign and track homework with due dates. Add notes and instructions. Organize your study schedule effectively.</p>
+                                <p>Assign and track homework with due dates. Add notes and instructions. Organize your
+                                    study schedule effectively.</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">📊</div>
                                 <h3>Statistics Dashboard</h3>
-                                <p>Track your learning progress. View total terms, favorites, bookmarks, recent views, and session statistics. Visualize subject distribution.</p>
+                                <p>Track your learning progress. View total terms, favorites, bookmarks, recent views,
+                                    and session statistics. Visualize subject distribution.</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">🔤</div>
                                 <h3>A-Z Index</h3>
-                                <p>Browse all terms alphabetically. Quick navigation by letter. Perfect for dictionary-style exploration.</p>
+                                <p>Browse all terms alphabetically. Quick navigation by letter. Perfect for
+                                    dictionary-style exploration.</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">🎨</div>
                                 <h3>Customizable Interface</h3>
-                                <p>Dark/Light theme toggle. Multiple font options (Inter, Merriweather, Lora, Open Sans, Georgia). Adjustable font size for comfortable reading.</p>
+                                <p>Dark/Light theme toggle. Multiple font options (Inter, Merriweather, Lora, Open Sans,
+                                    Georgia). Adjustable font size for comfortable reading.</p>
                             </div>
-                            
+
                             <div class="feature-box">
                                 <div class="feature-box-icon">⏰</div>
                                 <h3>Indian Time Format</h3>
-                                <p>Live clock with Indian Standard Time (Asia/Kolkata). Timestamps on every action in hh:mm:ss AM/PM DayName format. Auto-syncs with online time server when available.</p>
+                                <p>Live clock with Indian Standard Time (Asia/Kolkata). Timestamps on every action in
+                                    hh:mm:ss AM/PM DayName format. Auto-syncs with online time server when available.
+                                </p>
                             </div>
                         </div>
-                        
+
                         <div class="features-footer">
                             <h2>Developed For</h2>
                             <p class="footer-large">Teacher Fest 2025-26</p>
-                            
+
                             <!-- Developer Cards Section (scroll target) -->
-                            <div id="developerCards" style="margin-top: 40px; padding: 30px 20px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08)) !important; border-radius: 12px;">
-                                <h2 style="text-align: center; margin-bottom: 30px; font-size: 28px; color: #3730a3 !important; text-shadow: 0 0 1px #3730a3;">Meet the Developers</h2>
+                            <div id="developerCards"
+                                style="margin-top: 40px; padding: 30px 20px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08)) !important; border-radius: 12px;">
+                                <h2
+                                    style="text-align: center; margin-bottom: 30px; font-size: 28px; color: #3730a3 !important; text-shadow: 0 0 1px #3730a3;">
+                                    Meet the Developers</h2>
                                 <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;">
                                     <!-- Developer Card 1 -->
-                                    <div style="background: #ffffff !important; background-color: #ffffff !important; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 320px; text-align: left; border: 2px solid rgba(99, 102, 241, 0.3);">
+                                    <div
+                                        style="background: #ffffff !important; background-color: #ffffff !important; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 320px; text-align: left; border: 2px solid rgba(99, 102, 241, 0.3);">
                                         <div style="text-align: center; margin-bottom: 15px;">
-                                            <img src="/web/images/dev1.jpg" alt="Maninder Singh" style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; border: 3px solid #4f46e5; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); display: inline-block;">
+                                            <img src="/web/images/dev1.jpg" alt="Maninder Singh"
+                                                style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; border: 3px solid #4f46e5; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); display: inline-block;">
                                         </div>
-                                        <h3 style="color: #1e3a8a !important; margin-bottom: 6px; font-size: 20px; text-align: center; font-weight: 700;">Maninder Singh</h3>
-                                        <p style="color: #4b5563 !important; font-size: 13px; margin-bottom: 15px; text-align: center; font-style: italic;">Lead Developer & System Architect</p>
-                                        
+                                        <h3
+                                            style="color: #1e3a8a !important; margin-bottom: 6px; font-size: 20px; text-align: center; font-weight: 700;">
+                                            Maninder Singh</h3>
+                                        <p
+                                            style="color: #4b5563 !important; font-size: 13px; margin-bottom: 15px; text-align: center; font-style: italic;">
+                                            Lead Developer & System Architect</p>
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Designation</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Computer Faculty</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Designation</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Computer
+                                                Faculty</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">School</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">School of Eminence Amloh</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">School</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">School
+                                                of Eminence Amloh</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Block</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Amloh</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Block</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Amloh</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">District</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Fatehgarh Sahib</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">District</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Fatehgarh
+                                                Sahib</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">State</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Punjab</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">State</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Punjab</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Department</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Department of Education Punjab</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Department</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Department
+                                                of Education Punjab</span>
                                         </div>
-                                        
-                                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+
+                                        <div
+                                            style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
                                             <div style="margin-bottom: 6px;">
-                                                <strong style="color: #000000 !important; font-size: 12px; display: inline; margin-right: 6px; font-weight: 700;">📱 Mobile:</strong>
-                                                <span style="color: #2563eb !important; font-size: 13px; font-weight: 600;">9855533266</span>
+                                                <strong
+                                                    style="color: #000000 !important; font-size: 12px; display: inline; margin-right: 6px; font-weight: 700;">📱
+                                                    Mobile:</strong>
+                                                <span
+                                                    style="color: #2563eb !important; font-size: 13px; font-weight: 600;">9855533266</span>
                                             </div>
                                             <div>
-                                                <strong style="color: #000000 !important; font-size: 12px; display: inline; margin-right: 6px; font-weight: 700;">📧 Email:</strong>
-                                                <span style="color: #2563eb !important; font-size: 12px;">maninder@example.com</span>
+                                                <strong
+                                                    style="color: #000000 !important; font-size: 12px; display: inline; margin-right: 6px; font-weight: 700;">📧
+                                                    Email:</strong>
+                                                <span style="color: #2563eb !important; font-size: 12px;"><a
+                                                        href="/cdn-cgi/l/email-protection" class="__cf_email__"
+                                                        data-cfemail="2b464a4542454f4e596b4e534a465b474e05484446">[email&#160;protected]</a></span>
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <!-- Developer Card 2 -->
-                                    <div style="background: #ffffff !important; background-color: #ffffff !important; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 320px; text-align: left; border: 2px solid rgba(168, 85, 247, 0.3);">
+                                    <div
+                                        style="background: #ffffff !important; background-color: #ffffff !important; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 320px; text-align: left; border: 2px solid rgba(168, 85, 247, 0.3);">
                                         <div style="text-align: center; margin-bottom: 15px;">
-                                            <img src="/web/images/dev2.jpg" alt="Pooja Goel" style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; border: 3px solid #7c3aed; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); display: inline-block;">
+                                            <img src="/web/images/dev2.jpg" alt="Pooja Goel"
+                                                style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; border: 3px solid #7c3aed; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); display: inline-block;">
                                         </div>
-                                        <h3 style="color: #581c87 !important; margin-bottom: 6px; font-size: 20px; text-align: center; font-weight: 700;">Pooja Goel</h3>
-                                        <p style="color: #4b5563 !important; font-size: 13px; margin-bottom: 15px; text-align: center; font-style: italic;">Team Coordinator (Project Support)</p>
-                                        
+                                        <h3
+                                            style="color: #581c87 !important; margin-bottom: 6px; font-size: 20px; text-align: center; font-weight: 700;">
+                                            Pooja Goel</h3>
+                                        <p
+                                            style="color: #4b5563 !important; font-size: 13px; margin-bottom: 15px; text-align: center; font-style: italic;">
+                                            Team Coordinator (Project Support)</p>
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Designation</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Computer Faculty</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Designation</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Computer
+                                                Faculty</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">School</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">School of Eminence Khamano</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">School</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">School
+                                                of Eminence Khamano</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Block</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Khamano</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Block</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Khamano</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">District</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Fatehgarh Sahib</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">District</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Fatehgarh
+                                                Sahib</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">State</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Punjab</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">State</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Punjab</span>
                                         </div>
-                                        
+
                                         <div style="margin-bottom: 8px;">
-                                            <strong style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Department</strong>
-                                            <span style="color: #1f2937 !important; font-size: 13px; display: block;">Department of Education Punjab</span>
+                                            <strong
+                                                style="color: #000000 !important; font-size: 12px; display: block; margin-bottom: 2px; font-weight: 700;">Department</strong>
+                                            <span
+                                                style="color: #1f2937 !important; font-size: 13px; display: block;">Department
+                                                of Education Punjab</span>
                                         </div>
-                                        
-                                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+
+                                        <div
+                                            style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
                                             <div>
-                                                <strong style="color: #000000 !important; font-size: 12px; display: inline; margin-right: 6px; font-weight: 700;">📧 Email:</strong>
-                                                <span style="color: #7c3aed !important; font-size: 12px;">pooja@example.com</span>
+                                                <strong
+                                                    style="color: #000000 !important; font-size: 12px; display: inline; margin-right: 6px; font-weight: 700;">📧
+                                                    Email:</strong>
+                                                <span style="color: #7c3aed !important; font-size: 12px;"><a
+                                                        href="/cdn-cgi/l/email-protection" class="__cf_email__"
+                                                        data-cfemail="98e8f7f7f2f9d8fde0f9f5e8f4fdb6fbf7f5">[email&#160;protected]</a></span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <p class="copyright-text">Copyright © 2025-26 PRISM Team</p>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Search View -->
                 <div class="view" id="searchView">
                     <div class="view-header">
                         <h2>Search Terms</h2>
-                        <input type="text" id="searchInput" class="search-input" placeholder="Start typing to see instant results..." autocomplete="off">
+                        <input type="text" id="searchInput" class="search-input"
+                            placeholder="Start typing to see instant results..." autocomplete="off">
                     </div>
                     <div id="searchResults" class="search-results"></div>
                 </div>
-                
+
                 <!-- Subjects View -->
                 <div class="view" id="subjectsView">
                     <div class="view-header">
@@ -640,7 +927,7 @@
                     </div>
                     <div id="subjectsList"></div>
                 </div>
-                
+
                 <!-- Alphabet View -->
                 <div class="view" id="alphabetView">
                     <div class="view-header">
@@ -650,12 +937,12 @@
                     <div class="alphabet-nav" id="alphabetNav"></div>
                     <div id="alphabetTerms" class="alphabet-terms"></div>
                 </div>
-                
+
                 <!-- Collections View -->
                 <div class="view" id="collectionsView">
                     <!-- Dynamic content loaded by JavaScript -->
                 </div>
-                
+
                 <!-- Statistics View -->
                 <div class="view" id="statsView">
                     <div class="view-header">
@@ -664,7 +951,7 @@
                     </div>
                     <div id="statsContent"></div>
                 </div>
-                
+
                 <!-- Homework View -->
                 <div class="view" id="homeworkView">
                     <div class="view-header">
@@ -673,13 +960,13 @@
                     </div>
                     <div id="homeworkList"></div>
                 </div>
-                
+
                 <!-- Term Detail View -->
                 <div class="view" id="termView">
                     <div id="termContent"></div>
                 </div>
             </div>
-            
+
             <!-- Loading Overlay -->
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
@@ -687,7 +974,7 @@
             </div>
         </main>
     </div>
-    
+
     <!-- Homework Modal -->
     <div class="modal" id="homeworkModal">
         <div class="modal-content">
@@ -699,10 +986,10 @@
                 <label class="input-label">Term</label>
                 <input type="text" id="hwTermInput" class="input-field" placeholder="Search term..." autocomplete="off">
                 <div id="hwSuggestions" class="suggestions"></div>
-                
+
                 <label class="input-label">Due Date</label>
                 <input type="date" id="hwDate" class="input-field">
-                
+
                 <label class="input-label">Notes (Optional)</label>
                 <textarea id="hwNotes" class="input-field" placeholder="Add any notes or instructions..."></textarea>
             </div>
@@ -713,14 +1000,94 @@
         </div>
     </div>
     <!-- Static Bottom Footer -->
-<footer class="page-footer">
-    <div class="footer-content">
-        <img src="https://madewithlove.org.in/badge.svg" alt="Made with Love in India" class="love-india">
-        <span class="footer-text">
-            Developed with ❤️ by <strong>Maninder Singh</strong> & <strong>Pooja Goel</strong> — CFs Fatehgarh Sahib
-        </span>
-    </div>
-</footer>
+    <footer class="page-footer"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); border-top: none; height: 50px; box-shadow: 0 -4px 20px rgba(102, 126, 234, 0.3);">
+        <div class="footer-content" style="gap: 15px; animation: footerPulse 3s ease-in-out infinite;">
+            <style>
+                @keyframes footerPulse {
+
+                    0%,
+                    100% {
+                        transform: scale(1);
+                    }
+
+                    50% {
+                        transform: scale(1.02);
+                    }
+                }
+
+                @keyframes shimmer {
+                    0% {
+                        background-position: -1000px 0;
+                    }
+
+                    100% {
+                        background-position: 1000px 0;
+                    }
+                }
+
+                .footer-emoji {
+                    font-size: 20px;
+                    animation: bounce 2s ease-in-out infinite;
+                    display: inline-block;
+                }
+
+                @keyframes bounce {
+
+                    0%,
+                    100% {
+                        transform: translateY(0);
+                    }
+
+                    50% {
+                        transform: translateY(-5px);
+                    }
+                }
+
+                .footer-main-text {
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: #ffffff;
+                    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+                    letter-spacing: 0.5px;
+                }
+
+                .footer-creators {
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #fff;
+                    background: linear-gradient(90deg, #ffffff 0%, #ffd6f7 50%, #ffffff 100%);
+                    background-size: 200% auto;
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    animation: shimmer 3s linear infinite;
+                }
+
+                .footer-event {
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: rgba(255, 255, 255, 0.95);
+                    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+                }
+
+                .footer-separator {
+                    color: rgba(255, 255, 255, 0.6);
+                    font-weight: 300;
+                }
+
+                .footer-content:hover .footer-emoji {
+                    animation: bounce 0.5s ease-in-out infinite;
+                }
+            </style>
+            <span class="footer-emoji">💥</span>
+            <span class="footer-main-text">Education Reimagined. Learning Unleashed.</span>
+            <span class="footer-separator">|</span>
+            <span class="footer-creators">Maninder Singh × Pooja Goel</span>
+            <span class="footer-separator">|</span>
+            <span class="footer-event">Teacher Fest 2025-26</span>
+        </div>
+    </footer>
     <script src="/web/script.js"></script>
     <script>
         // Function to navigate to developer cards on features page
@@ -730,18 +1097,79 @@
             if (featuresBtn) {
                 featuresBtn.click();
             }
-            
+
             // Wait for view to load, then scroll to developer cards
             setTimeout(() => {
                 const developerCards = document.getElementById('developerCards');
                 if (developerCards) {
-                    developerCards.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'start' 
+                    developerCards.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
                     });
                 }
             }, 300);
         }
+
+        // Silent Connection Status Checker - runs in background without affecting functionality
+        (function () {
+            const statusDot = document.getElementById('statusDot');
+            const statusLabel = document.getElementById('statusLabel');
+
+            function updateConnectionStatus(isOnline) {
+                if (!statusDot || !statusLabel) return;
+
+                if (isOnline) {
+                    statusDot.className = 'status-dot online';
+                    statusLabel.className = 'status-label online';
+                    statusLabel.textContent = 'Online';
+                } else {
+                    statusDot.className = 'status-dot offline';
+                    statusLabel.className = 'status-label offline';
+                    statusLabel.textContent = 'Offline';
+                }
+            }
+
+            function checkConnection() {
+                // Use multiple silent detection methods
+                if (navigator.onLine === false) {
+                    updateConnectionStatus(false);
+                    return;
+                }
+
+                // Try to fetch a tiny resource silently
+                fetch('https://www.google.com/favicon.ico', {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    cache: 'no-cache'
+                }).then(() => {
+                    updateConnectionStatus(true);
+                }).catch(() => {
+                    updateConnectionStatus(false);
+                });
+            }
+
+            // Initial check after page loads
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () {
+                    setTimeout(checkConnection, 500);
+                });
+            } else {
+                setTimeout(checkConnection, 500);
+            }
+
+            // Listen to online/offline events
+            window.addEventListener('online', function () {
+                updateConnectionStatus(true);
+            });
+
+            window.addEventListener('offline', function () {
+                updateConnectionStatus(false);
+            });
+
+            // Check periodically every 30 seconds (silent, non-intrusive)
+            setInterval(checkConnection, 30000);
+        })();
     </script>
 </body>
+
 </html>

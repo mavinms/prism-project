@@ -36,28 +36,62 @@ function startClock() {
     }, 1000);
 }
 
-// Fetch time from online server
+// Fetch time from online server with multiple fallbacks
 async function fetchOnlineTime() {
-    try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3000);
-
-        const response = await fetch('https://worldtimeapi.org/api/timezone/Asia/Kolkata', {
-            signal: controller.signal
-        });
-
-        clearTimeout(timeout);
-
-        if (response.ok) {
-            const data = await response.json();
-            const serverTime = new Date(data.datetime);
-            window.timeOffset = serverTime.getTime() - Date.now();
-            console.log('✓ Using online time (Asia/Kolkata)');
+    // List of time APIs to try (in order of preference)
+    const timeAPIs = [
+        {
+            url: 'https://worldtimeapi.org/api/timezone/Asia/Kolkata',
+            parse: (data) => new Date(data.datetime)
+        },
+        {
+            url: 'https://timeapi.io/api/Time/current/zone?timeZone=Asia/Kolkata',
+            parse: (data) => new Date(data.dateTime)
+        },
+        {
+            url: 'http://worldclockapi.com/api/json/ist/now',
+            parse: (data) => new Date(data.currentDateTime)
+        },
+        {
+            // Fallback: Use any timezone and convert
+            url: 'https://worldtimeapi.org/api/ip',
+            parse: (data) => new Date(data.datetime)
         }
-    } catch (error) {
-        console.log('⚠ Using system time (offline)');
-        window.timeOffset = undefined;
+    ];
+
+    for (const api of timeAPIs) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5000); // Increased to 5 seconds
+            
+            const response = await fetch(api.url, {
+                signal: controller.signal,
+                mode: 'cors',
+                cache: 'no-cache'
+            });
+            
+            clearTimeout(timeout);
+            
+            if (response.ok) {
+                const data = await response.json();
+                const serverTime = api.parse(data);
+                
+                if (serverTime && !isNaN(serverTime.getTime())) {
+                    window.timeOffset = serverTime.getTime() - Date.now();
+                    console.log('✓ Using online time (Asia/Kolkata) from:', api.url.split('/')[2]);
+                    return true; // Success!
+                }
+            }
+        } catch (error) {
+            // Silently continue to next API
+            continue;
+        }
     }
+    
+    // All APIs failed - use system time
+    console.log('⚠ Using system time (all time APIs unreachable)');
+    window.timeOffset = undefined;
+    return false;
 }
 
 // Update clock with offset
@@ -1512,8 +1546,19 @@ function toggleTheme() {
 
 function changeFont() {
     const font = document.getElementById('fontSelect').value;
+    // Apply to both body and main content for consistent styling
     document.body.style.fontFamily = font;
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.style.fontFamily = font;
+    }
+    // Also apply to term content area
+    const termContent = document.getElementById('termContent');
+    if (termContent) {
+        termContent.style.fontFamily = font;
+    }
     localStorage.setItem('font', font);
+    console.log('✓ Font changed to:', font);
 }
 
 function changeFontSize(delta) {
@@ -1540,11 +1585,25 @@ window.addEventListener('load', () => {
         document.querySelector('.theme-icon').textContent = '☀️';
     }
 
-    const font = localStorage.getItem('font');
-    if (font) {
-        document.body.style.fontFamily = font;
-        document.getElementById('fontSelect').value = font;
+   const font = localStorage.getItem('font');
+if (font) {
+    document.body.style.fontFamily = font;
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.style.fontFamily = font;
     }
+    const termContent = document.getElementById('termContent');
+    if (termContent) {
+        termContent.style.fontFamily = font;
+    }
+    document.getElementById('fontSelect').value = font;
+} else {
+    // Set default font to Nunito if none selected
+    const defaultFont = "'Nunito', sans-serif";
+    document.body.style.fontFamily = defaultFont;
+    document.getElementById('fontSelect').value = defaultFont;
+    localStorage.setItem('font', defaultFont);
+}
 
     const fontSize = localStorage.getItem('fontSize');
     if (fontSize) {
