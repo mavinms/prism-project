@@ -402,8 +402,119 @@
         }
     </style>
 </head>
+<style>
+/* Ultra-compact sidebar - NO SCROLLBAR */
+.sidebar {
+    overflow-y: auto !important;
+    padding: 8px !important;
+}
+
+.brand {
+    padding: 8px 12px !important;
+    margin-bottom: 6px !important;
+}
+
+.brand h1 {
+    font-size: 20px !important;
+    margin: 0 0 2px 0 !important;
+}
+
+.nav-btn {
+    padding: 6px 12px !important;
+    margin-bottom: 2px !important;
+    font-size: 13px !important;
+}
+
+.quick-access-btn {
+    padding: 4px 12px !important;
+    margin-bottom: 1px !important;
+    font-size: 12px !important;
+}
+
+.quick-divider {
+    font-size: 9px !important;
+    padding: 3px 12px !important;
+    margin: 4px 0 2px 0 !important;
+}
+
+/* Compact Statistics */
+.stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 12px !important;
+}
+
+.stat-card {
+    padding: 12px !important;
+    min-height: 70px !important;
+}
+
+/* Collection Tiles */
+.collections-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+}
+
+.collection-name {
+    word-wrap: break-word !important;
+    max-width: 220px !important;
+}
+</style>
 
 <body>
+    
+    <!-- Welcome Splash Screen -->
+ <div id="welcomeSplash" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 99999;">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+            <div style="text-align: center; color: white; max-width: 700px; padding: 50px; animation: slideUp 0.8s ease-out;">
+                <div style="margin-bottom: 30px; animation: bounce 2s infinite;">
+                    <div style="width: 150px; height: 150px; margin: 0 auto; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                        <span style="font-size: 80px;">🌈</span>
+                    </div>
+                </div>
+                <h1 style="font-size: 4em; margin: 30px 0; font-weight: 900; text-shadow: 0 5px 30px rgba(0,0,0,0.4); animation: glow 2s ease-in-out infinite;">PRISM</h1>
+                <p style="font-size: 1.5em; margin: 10px 0; opacity: 0.95; font-weight: 600; letter-spacing: 2px;">Personalized & Progressive</p>
+                <p style="font-size: 1.3em; margin: 0 0 40px; opacity: 0.9;">Resource-Intelligent Study Module</p>
+                <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 25px; padding: 40px; margin: 30px 0; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 15px 50px rgba(0,0,0,0.2);">
+                    <p style="font-size: 1.2em; line-height: 2; margin: 0; font-weight: 500;">
+                        🎯 <strong>Thousands of Academic Terms</strong><br/>
+                        📚 <strong>All Major Subjects Covered</strong><br/>
+                        🏆 <strong>Smart Progress Tracking</strong><br/>
+                        ⚡ <strong>100% Offline & Fast</strong>
+                    </p>
+                </div>
+                <button onclick="closeWelcomeSplash()" style="background: white; color: #667eea; border: none; padding: 20px 60px; font-size: 1.3em; border-radius: 50px; cursor: pointer; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: transform 0.3s; animation: pulse 2s infinite;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">🚀 Let's Begin!</button>
+
+                <div style="display: flex; justify-content: center; gap: 30px; margin: 30px 0;">
+                    
+                    <div style="text-align: center; cursor: pointer; transition: opacity 0.3s;" 
+                         onmouseover="this.style.opacity='0.8'" 
+                         onmouseout="this.style.opacity='1'"
+                         onclick="alert('Maninder Singh - CF Fatehgarh Sahib')">
+                        <img src="/web/images/dev1.jpg" alt="Maninder Singh" 
+                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <div style="font-size: 0.9em; margin-top: 5px; font-weight: 600;">Maninder Singh</div>
+                    </div>
+
+                    <div style="text-align: center; cursor: pointer; transition: opacity 0.3s;"
+                         onmouseover="this.style.opacity='0.8'" 
+                         onmouseout="this.style.opacity='1'"
+                         onclick="alert('Pooja Goel - CF Fatehgarh Sahib')">
+                        <img src="/web/images/dev2.jpg" alt="Pooja Goel"
+                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <div style="font-size: 0.9em; margin-top: 5px; font-weight: 600;">Pooja Goel</div>
+                    </div>
+                </div>
+                <p style="margin-top: 40px; font-size: 1em; opacity: 0.85;">Dedicated To Educational Excellence And Innovation. Thoughtfully Crafted For Teachers & Students By Maninder Singh & Pooja Goel, Cfs Fatehgarh Sahib</p>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+    @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+    @keyframes pulse { 0%, 100% { box-shadow: 0 10px 30px rgba(0,0,0,0.3); } 50% { box-shadow: 0 15px 50px rgba(0,0,0,0.5); } }
+    @keyframes glow { 0%, 100% { text-shadow: 0 5px 30px rgba(255,255,255,0.3); } 50% { text-shadow: 0 5px 50px rgba(255,255,255,0.6), 0 0 80px rgba(255,255,255,0.4); } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    </style>
 
     <div class="app-container">
         <!-- Sidebar Navigation -->
@@ -483,19 +594,19 @@
             <div class="quick-access">
                 <div class="quick-access-header">Quick Access</div>
 
-                <button class="quick-access-btn" id="quickFavorites">
+                <button class="quick-access-btn" id="quickFavorites" onclick="showFilteredTerms('favorites', 'Favorite Terms')">
                     <span class="quick-icon">⭐</span>
                     <span class="quick-label">Favorites</span>
                     <span class="quick-count" id="favCount">0</span>
                 </button>
 
-                <button class="quick-access-btn" id="quickBookmarks">
+                <button class="quick-access-btn" id="quickBookmarks" onclick="showFilteredTerms('bookmarks', 'Bookmarked Terms')">
                     <span class="quick-icon">🔖</span>
                     <span class="quick-label">Bookmarks</span>
                     <span class="quick-count" id="bookCount">0</span>
                 </button>
 
-                <button class="quick-access-btn" id="quickNotes">
+                <button class="quick-access-btn" id="quickNotes" onclick="showFilteredTerms('notes', 'Terms with Notes')">
                     <span class="quick-icon">📝</span>
                     <span class="quick-label">With Notes</span>
                     <span class="quick-count" id="notesCount">0</span>
@@ -503,22 +614,50 @@
 
                 <div class="quick-divider">Difficulty</div>
 
-                <button class="quick-access-btn difficulty-easy" id="quickEasy">
+                <button class="quick-access-btn difficulty-easy" id="quickEasy" onclick="showFilteredTerms('difficulty', 'Easy Terms', 'easy')">
                     <span class="quick-icon">✅</span>
                     <span class="quick-label">Easy</span>
                     <span class="quick-count" id="easyCount">0</span>
                 </button>
 
-                <button class="quick-access-btn difficulty-medium" id="quickMedium">
+                <button class="quick-access-btn difficulty-medium" id="quickMedium" onclick="showFilteredTerms('difficulty', 'Medium Terms', 'medium')">
                     <span class="quick-icon">⚠️</span>
                     <span class="quick-label">Medium</span>
                     <span class="quick-count" id="mediumCount">0</span>
                 </button>
 
-                <button class="quick-access-btn difficulty-hard" id="quickHard">
+                <button class="quick-access-btn difficulty-hard" id="quickHard" onclick="showFilteredTerms('difficulty', 'Hard Terms', 'hard')">
                     <span class="quick-icon">🔥</span>
                     <span class="quick-label">Hard</span>
                     <span class="quick-count" id="hardCount">0</span>
+                </button>
+
+                <div class="quick-divider">⭐ Top Rated</div>
+
+                <button class="quick-access-btn" id="quick5Star" style="cursor: default; opacity: 0.8;">
+                    <span class="quick-icon">⭐</span>
+                    <span class="quick-label">5 Star</span>
+                    <span class="quick-count" id="rating5Count">0</span>
+                </button>
+
+                <button class="quick-access-btn" id="quick4Star" style="cursor: default; opacity: 0.8;">
+                    <span class="quick-icon">⭐</span>
+                    <span class="quick-label">4 Star</span>
+                    <span class="quick-count" id="rating4Count">0</span>
+                </button>
+
+                <div class="quick-divider">🎯 Important</div>
+
+                <button class="quick-access-btn" id="quickCritical" style="border-left: 3px solid #FF4444; cursor: default; opacity: 0.8;">
+                    <span class="quick-icon">🔴</span>
+                    <span class="quick-label">Critical</span>
+                    <span class="quick-count" id="criticalCount">0</span>
+                </button>
+
+                <button class="quick-access-btn" id="quickHigh" style="border-left: 3px solid #FF8C00; cursor: default; opacity: 0.8;">
+                    <span class="quick-icon">🟠</span>
+                    <span class="quick-label">High</span>
+                    <span class="quick-count" id="highCount">0</span>
                 </button>
             </div>
 
@@ -562,9 +701,16 @@
                         <button id="fontDecrease" class="icon-btn">A-</button>
                         <button id="fontIncrease" class="icon-btn">A+</button>
                     </div>
+                    
+                    <!-- Global Search Bar -->
+                    <div style="position: relative; margin-left: 20px;">
+                        <input type="text" id="globalSearchInput" placeholder="🔍 Start typing to search terms..." style="padding: 8px 12px; border-radius: 20px; border: 2px solid var(--border); width: 300px; font-size: 14px;">
+                        <div id="globalSearchResults" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid var(--border); border-radius: 8px; max-height: 400px; overflow-y: auto; display: none; z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.15); margin-top: 4px;"></div>
+                    </div>
                 </div>
                 <div class="toolbar-right">
-                    <button id="printBtn" class="icon-btn" title="Print">🖨️</button>
+                    <!-- Print button hidden - not working correctly -->
+                    <!-- <button id="printBtn" class="icon-btn" title="Print">🖨️</button> -->
                     <button id="exitBtn" class="exit-btn" title="Exit">✖ Exit</button>
                 </div>
             </div>

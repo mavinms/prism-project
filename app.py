@@ -70,9 +70,20 @@ def init_db():
             personal_tags TEXT DEFAULT '',
             notes TEXT DEFAULT '',
             last_viewed TIMESTAMP,
+            important_level TEXT DEFAULT 'none',
             UNIQUE(term, user_id)
         )
     """)
+    
+    # Schema migration for important_level
+    try:
+        cursor.execute("PRAGMA table_info(user_term_meta)")
+        columns = [col[1] for col in cursor.fetchall()]
+        if 'important_level' not in columns:
+            cursor.execute("ALTER TABLE user_term_meta ADD COLUMN important_level TEXT DEFAULT 'none'")
+            db.commit()
+    except sqlite3.Error:
+        pass
     
     # Saved tests table
     cursor.execute("""
@@ -155,6 +166,17 @@ def init_db():
         pass
     
     # --- End of Schema Migration ---
+    
+    # User preferences table for app settings
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_preferences (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT DEFAULT 'local',
+            preference_key TEXT NOT NULL,
+            preference_value TEXT,
+            UNIQUE(user_id, preference_key)
+        )
+    """)
     
     db.commit()
     db.close()
@@ -347,7 +369,7 @@ def save_term_meta():
         # Get existing meta
         cursor.execute("""
             SELECT favorite, bookmark, difficulty, rating, read_status, 
-                    personal_tags, notes
+                    personal_tags, notes, important_level
             FROM user_term_meta 
             WHERE term = ? AND user_id = ?
         """, (term, user_id))
@@ -361,14 +383,15 @@ def save_term_meta():
         read_status = data.get('read_status', existing[4] if existing else 'to-read')
         personal_tags = data.get('personal_tags', existing[5] if existing else '')
         notes = data.get('notes', existing[6] if existing else '')
+        important_level = data.get('important_level', existing[7] if existing else 'none')
         
         cursor.execute("""
             INSERT OR REPLACE INTO user_term_meta 
             (term, user_id, favorite, bookmark, difficulty, rating, read_status, 
-             personal_tags, notes, last_viewed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             personal_tags, notes, important_level, last_viewed)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (term, user_id, favorite, bookmark, difficulty, rating, read_status,
-              personal_tags, notes, datetime.now().isoformat()))
+              personal_tags, notes, important_level, datetime.now().isoformat()))
         
         db.commit()
         # Removed db.close()
@@ -392,7 +415,7 @@ def get_term_meta(term):
         cursor = db.cursor()
         cursor.execute("""
             SELECT favorite, bookmark, difficulty, rating, read_status, 
-                    personal_tags, notes, last_viewed
+                    personal_tags, notes, last_viewed, important_level
             FROM user_term_meta 
             WHERE term = ? AND user_id = ?
         """, (term, user_id))
@@ -409,7 +432,8 @@ def get_term_meta(term):
                 'read_status': row[4],
                 'personal_tags': row[5],
                 'notes': row[6],
-                'last_viewed': row[7]
+                'last_viewed': row[7],
+                'important_level': row[8]
             })
         else:
             return jsonify({
@@ -420,7 +444,8 @@ def get_term_meta(term):
                 'read_status': 'to-read',
                 'personal_tags': '',
                 'notes': '',
-                'last_viewed': None
+                'last_viewed': None,
+                'important_level': 'none'
             })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -628,7 +653,7 @@ def get_stats_overview():
 
 @app.route('/api/meta/counts', methods=['GET'])
 def get_meta_counts():
-    """Get metadata counts"""
+    """Get metadata counts including ratings"""
     try:
         db = get_db()
         if not db:
@@ -640,25 +665,59 @@ def get_meta_counts():
         cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE notes != ''")
         notes_count = cursor.fetchone()[0]
         
-        # Hard terms
+        # Difficulty counts
         cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE difficulty = 'hard'")
         hard_count = cursor.fetchone()[0]
         
-        # Easy terms
         cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE difficulty = 'easy'")
         easy_count = cursor.fetchone()[0]
         
-        # Medium terms
         cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE difficulty = 'medium'")
         medium_count = cursor.fetchone()[0]
         
-        # Removed db.close()
+        # Rating counts
+        cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE rating = 5")
+        rating_5 = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE rating = 4")
+        rating_4 = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE rating = 3")
+        rating_3 = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE rating = 2")
+        rating_2 = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE rating = 1")
+        rating_1 = cursor.fetchone()[0]
+        
+        # Important level counts
+        cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE important_level = 'critical'")
+        important_critical = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE important_level = 'high'")
+        important_high = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE important_level = 'medium'")
+        important_medium = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM user_term_meta WHERE important_level = 'low'")
+        important_low = cursor.fetchone()[0]
         
         return jsonify({
             'with_notes': notes_count,
             'hard': hard_count,
             'easy': easy_count,
-            'medium': medium_count
+            'medium': medium_count,
+            'rating_5': rating_5,
+            'rating_4': rating_4,
+            'rating_3': rating_3,
+            'rating_2': rating_2,
+            'rating_1': rating_1,
+            'important_critical': important_critical,
+            'important_high': important_high,
+            'important_medium': important_medium,
+            'important_low': important_low
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -749,237 +808,6 @@ def filter_by_metadata(filter_type, param=None):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/collections', methods=['GET'])
-def get_collections():
-    """Get all user collections"""
-    try:
-        user_id = request.args.get('user_id', 'local')
-        db = get_db()
-        if not db:
-            return jsonify({'error': 'Database not found'}), 500
-        
-        cursor = db.cursor()
-        cursor.execute("""
-            SELECT id, title, description, term_keys, created_at, updated_at
-            FROM user_collections
-            WHERE user_id = ?
-            ORDER BY created_at DESC
-        """, (user_id,))
-        
-        rows = cursor.fetchall()
-        
-        collections = []
-        for row in rows:
-            collection_id = row[0]
-            
-            # Get terms from collection_terms table
-            cursor.execute("""
-                SELECT term FROM collection_terms
-                WHERE collection_id = ?
-            """, (collection_id,))
-            terms = [t[0] for t in cursor.fetchall()]
-            
-            # Parse levels from title (format: "Level1 > Level2 > Level3")
-            title = row[1] or ""
-            levels = [l.strip() for l in title.split('>') if l.strip()]
-            
-            collections.append({
-                'id': collection_id,
-                'name': title,
-                'levels': levels,
-                'description': row[2],
-                'terms': terms,
-                'created': row[4],
-                'updated': row[5]
-            })
-        
-        return jsonify(collections)
-    except Exception as e:
-        print(f"Error getting collections: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/collections', methods=['POST'])
-def create_collection():
-    """Create a new collection"""
-    try:
-        data = request.json
-        user_id = data.get('user_id', 'local')
-        title = data.get('name', '')
-        description = data.get('description', '')
-        terms = data.get('terms', [])
-        
-        db = get_db()
-        if not db:
-            return jsonify({'error': 'Database not found'}), 500
-        
-        cursor = db.cursor()
-        
-        # Insert collection
-        cursor.execute("""
-            INSERT INTO user_collections (user_id, title, description, created_at, updated_at)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """, (user_id, title, description))
-        
-        collection_id = cursor.lastrowid
-        
-        # Insert terms
-        for term in terms:
-            cursor.execute("""
-                INSERT OR IGNORE INTO collection_terms (collection_id, term)
-                VALUES (?, ?)
-            """, (collection_id, term))
-        
-        db.commit()
-        
-        return jsonify({
-            'success': True,
-            'id': collection_id,
-            'message': 'Collection created successfully'
-        })
-    except Exception as e:
-        print(f"Error creating collection: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/collections/<int:collection_id>', methods=['PUT'])
-def update_collection(collection_id):
-    """Update a collection"""
-    try:
-        data = request.json
-        title = data.get('name', '')
-        description = data.get('description', '')
-        terms = data.get('terms', [])
-        
-        db = get_db()
-        if not db:
-            return jsonify({'error': 'Database not found'}), 500
-        
-        cursor = db.cursor()
-        
-        # Update collection
-        cursor.execute("""
-            UPDATE user_collections
-            SET title = ?, description = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        """, (title, description, collection_id))
-        
-        # Delete existing terms
-        cursor.execute("DELETE FROM collection_terms WHERE collection_id = ?", (collection_id,))
-        
-        # Insert new terms
-        for term in terms:
-            cursor.execute("""
-                INSERT OR IGNORE INTO collection_terms (collection_id, term)
-                VALUES (?, ?)
-            """, (collection_id, term))
-        
-        db.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Collection updated successfully'
-        })
-    except Exception as e:
-        print(f"Error updating collection: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/collections/<int:collection_id>', methods=['DELETE'])
-def delete_collection(collection_id):
-    """Delete a collection"""
-    try:
-        db = get_db()
-        if not db:
-            return jsonify({'error': 'Database not found'}), 500
-        
-        cursor = db.cursor()
-        
-        # Delete collection (cascade will delete terms)
-        cursor.execute("DELETE FROM user_collections WHERE id = ?", (collection_id,))
-        
-        db.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Collection deleted successfully'
-        })
-    except Exception as e:
-        print(f"Error deleting collection: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/collections/<int:collection_id>/terms', methods=['POST'])
-def add_term_to_collection(collection_id):
-    """Add a term to a collection"""
-    try:
-        data = request.json
-        term = data.get('term', '')
-        
-        if not term:
-            return jsonify({'error': 'Term is required'}), 400
-        
-        db = get_db()
-        if not db:
-            return jsonify({'error': 'Database not found'}), 500
-        
-        cursor = db.cursor()
-        
-        # Add term
-        cursor.execute("""
-            INSERT OR IGNORE INTO collection_terms (collection_id, term)
-            VALUES (?, ?)
-        """, (collection_id, term))
-        
-        # Update collection timestamp
-        cursor.execute("""
-            UPDATE user_collections
-            SET updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        """, (collection_id,))
-        
-        db.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Term added to collection'
-        })
-    except Exception as e:
-        print(f"Error adding term to collection: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/collections/<int:collection_id>/terms/<path:term>', methods=['DELETE'])
-def remove_term_from_collection(collection_id, term):
-    """Remove a term from a collection"""
-    try:
-        from urllib.parse import unquote
-        term = unquote(term)
-        
-        db = get_db()
-        if not db:
-            return jsonify({'error': 'Database not found'}), 500
-        
-        cursor = db.cursor()
-        
-        # Remove term
-        cursor.execute("""
-            DELETE FROM collection_terms
-            WHERE collection_id = ? AND term = ?
-        """, (collection_id, term))
-        
-        # Update collection timestamp
-        cursor.execute("""
-            UPDATE user_collections
-            SET updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        """, (collection_id,))
-        
-        db.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Term removed from collection'
-        })
-    except Exception as e:
-        print(f"Error removing term from collection: {e}")
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/shutdown', methods=['POST'])
 def shutdown():
     """Shutdown the Flask server"""
@@ -1014,3 +842,88 @@ if __name__ == '__main__':
     finally:
         import os
         os._exit(0)
+@app.route('/api/filter', methods=['GET'])
+def filter_terms():
+    """Filter terms by rating or importance level"""
+    try:
+        user_id = request.args.get('user_id', 'local')
+        rating = request.args.get('rating')
+        important_level = request.args.get('important_level')
+        
+        db = get_db()
+        if not db:
+            return jsonify({'error': 'Database not found'}), 500
+        
+        cursor = db.cursor()
+        
+        if rating:
+            cursor.execute("""
+                SELECT t.term, t.subject 
+                FROM terms_data t
+                INNER JOIN user_term_meta m ON t.term = m.term
+                WHERE m.user_id = ? AND m.rating = ?
+                ORDER BY t.term
+            """, (user_id, int(rating)))
+        elif important_level:
+            cursor.execute("""
+                SELECT t.term, t.subject 
+                FROM terms_data t
+                INNER JOIN user_term_meta m ON t.term = m.term
+                WHERE m.user_id = ? AND m.important_level = ?
+                ORDER BY t.term
+            """, (user_id, important_level))
+        else:
+            return jsonify([])
+        
+        rows = cursor.fetchall()
+        results = [{'term': row[0], 'subject': row[1]} for row in rows]
+        
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/preferences/<key>', methods=['GET'])
+def get_preference(key):
+    """Get a user preference"""
+    try:
+        user_id = request.args.get('user_id', 'local')
+        db = get_db()
+        if not db:
+            return jsonify({'error': 'Database not found'}), 500
+        
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT preference_value FROM user_preferences
+            WHERE user_id = ? AND preference_key = ?
+        """, (user_id, key))
+        
+        row = cursor.fetchone()
+        if row:
+            return jsonify({'value': row[0]})
+        else:
+            return jsonify({'value': None})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/preferences/<key>', methods=['POST'])
+def set_preference(key):
+    """Set a user preference"""
+    try:
+        data = request.json
+        user_id = data.get('user_id', 'local')
+        value = data.get('value')
+        
+        db = get_db()
+        if not db:
+            return jsonify({'error': 'Database not found'}), 500
+        
+        cursor = db.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO user_preferences (user_id, preference_key, preference_value)
+            VALUES (?, ?, ?)
+        """, (user_id, key, str(value)))
+        
+        db.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

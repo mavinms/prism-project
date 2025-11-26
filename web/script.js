@@ -3,6 +3,7 @@ let allTerms = [];
 let currentView = 'discover';
 let currentTerm = null;
 let sessionTerms = 0;
+const sessionViewedSet = new Set();
 let allSubjects = [];
 let userCollections = []; // Loaded from database via loadCollections()
 
@@ -72,6 +73,10 @@ async function updateStats() {
         
         const stats = await response.json();
         
+        // Get meta counts for ratings and important
+        const metaResponse = await fetch('/api/meta/counts');
+        const metaStats = await metaResponse.json();
+        
         // Update sidebar counters
         const totalTermsCount = document.getElementById('totalTermsCount');
         const favCount = document.getElementById('favCount');
@@ -81,6 +86,10 @@ async function updateStats() {
         const mediumCount = document.getElementById('mediumCount');
         const hardCount = document.getElementById('hardCount');
         const sessionTermsCount = document.getElementById('sessionTermsCount');
+        const rating5Count = document.getElementById('rating5Count');
+        const rating4Count = document.getElementById('rating4Count');
+        const criticalCount = document.getElementById('criticalCount');
+        const highCount = document.getElementById('highCount');
         
         if (totalTermsCount) totalTermsCount.textContent = stats.total_terms || 0;
         if (favCount) favCount.textContent = stats.favorites || 0;
@@ -89,7 +98,11 @@ async function updateStats() {
         if (easyCount) easyCount.textContent = stats.easy || 0;
         if (mediumCount) mediumCount.textContent = stats.medium || 0;
         if (hardCount) hardCount.textContent = stats.hard || 0;
-        if (sessionTermsCount) sessionTermsCount.textContent = stats.recent_terms || 0;
+        // sessionTermsCount is updated in addRecentTerm() - not from database
+        if (rating5Count) rating5Count.textContent = metaStats.rating_5 || 0;
+        if (rating4Count) rating4Count.textContent = metaStats.rating_4 || 0;
+        if (criticalCount) criticalCount.textContent = metaStats.important_critical || 0;
+        if (highCount) highCount.textContent = metaStats.important_high || 0;
         
     } catch (error) {
         console.error('Failed to update stats:', error);
@@ -239,7 +252,7 @@ function setupEventListeners() {
         });
     });
 
-    // Quick access buttons
+    // Quick access buttons - already have null checks
     document.getElementById('quickFavorites')?.addEventListener('click', () => showFilteredTerms('favorites', 'Favorite Terms'));
     document.getElementById('quickBookmarks')?.addEventListener('click', () => showFilteredTerms('bookmarks', 'Bookmarked Terms'));
     document.getElementById('quickNotes')?.addEventListener('click', () => showFilteredTerms('notes', 'Terms with Notes'));
@@ -248,34 +261,60 @@ function setupEventListeners() {
     document.getElementById('quickHard')?.addEventListener('click', () => showFilteredTerms('difficulty', 'Hard Terms', 'hard'));
 
     // Theme toggle
-    document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+    document.getElementById('themeBtn')?.addEventListener('click', toggleTheme);
 
     // Font controls
-    document.getElementById('fontSelect').addEventListener('change', changeFont);
-    document.getElementById('fontIncrease').addEventListener('click', () => changeFontSize(1));
-    document.getElementById('fontDecrease').addEventListener('click', () => changeFontSize(-1));
+    document.getElementById('fontSelect')?.addEventListener('change', changeFont);
+    document.getElementById('fontIncrease')?.addEventListener('click', () => changeFontSize(1));
+    document.getElementById('fontDecrease')?.addEventListener('click', () => changeFontSize(-1));
 
     // Search with instant results
-    document.getElementById('searchInput').addEventListener('input', handleSearchInstant);
+    document.getElementById('searchInput')?.addEventListener('input', handleSearchInstant);
+    
+    // Search on Enter key - check if term exists, if not show Perplexity modal
+    document.getElementById('searchInput')?.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const query = e.target.value.trim();
+            
+            if (query.length < 2) {
+                showNotification('⚠️ Please enter at least 2 characters');
+                return;
+            }
+            
+            // Check if term exists in database
+            const matchingTerms = allTerms.filter(t => 
+                t.term.toLowerCase() === query.toLowerCase()
+            );
+            
+            if (matchingTerms.length > 0) {
+                // Term exists - open it
+                viewTerm(matchingTerms[0].term);
+            } else {
+                // Term not found - show Perplexity modal
+                showTermNotFoundModal(query);
+            }
+        }
+    });
 
-    // Print
-    document.getElementById('printBtn').addEventListener('click', () => window.print());
+    // Print - commented out in HTML, so skip if not found
+    document.getElementById('printBtn')?.addEventListener('click', () => window.print());
 
     // Exit
-    document.getElementById('exitBtn').addEventListener('click', exitApp);
+    document.getElementById('exitBtn')?.addEventListener('click', exitApp);
 
     // Homework
-    document.getElementById('addHomeworkBtn').addEventListener('click', () => {
-        document.getElementById('homeworkModal').classList.add('active');
+    document.getElementById('addHomeworkBtn')?.addEventListener('click', () => {
+        document.getElementById('homeworkModal')?.classList.add('active');
     });
-    document.getElementById('closeModal').addEventListener('click', () => {
-        document.getElementById('homeworkModal').classList.remove('active');
+    document.getElementById('closeModal')?.addEventListener('click', () => {
+        document.getElementById('homeworkModal')?.classList.remove('active');
     });
-    document.getElementById('saveHomework').addEventListener('click', saveHomework);
-    document.getElementById('cancelHomework').addEventListener('click', () => {
-        document.getElementById('homeworkModal').classList.remove('active');
+    document.getElementById('saveHomework')?.addEventListener('click', saveHomework);
+    document.getElementById('cancelHomework')?.addEventListener('click', () => {
+        document.getElementById('homeworkModal')?.classList.remove('active');
     });
-    document.getElementById('hwTermInput').addEventListener('input', handleHwSearch);
+    document.getElementById('hwTermInput')?.addEventListener('input', handleHwSearch);
 }
 
 // Update quick access counts
@@ -587,7 +626,23 @@ async function viewTerm(termName) {
 
     try {
         const response = await fetch(`/api/term/${encodeURIComponent(termName)}`);
+        
+        // Check if term was found
+        if (!response.ok) {
+            hideLoading();
+            showTermNotFoundModal(termName);
+            return;
+        }
+        
         const data = await response.json();
+        
+        // Double-check data is valid
+        if (!data || !data.term) {
+            hideLoading();
+            showTermNotFoundModal(termName);
+            return;
+        }
+        
         currentTerm = data;
 
         // Save to recent terms in database
@@ -601,7 +656,128 @@ async function viewTerm(termName) {
     } catch (error) {
         console.error('Error loading term:', error);
         hideLoading();
+        showTermNotFoundModal(termName);
     }
+}
+
+// Show modal when term is not found
+function showTermNotFoundModal(termName) {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.style.cssText = 'z-index: 999999; backdrop-filter: blur(4px);';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 480px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: modalSlideIn 0.3s ease-out;">
+            <!-- Icon -->
+            <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            
+            <!-- Title -->
+            <h2 style="margin: 0 0 12px 0; color: #1f2937; font-size: 24px; font-weight: 700; text-align: center;">
+                Term Not Found
+            </h2>
+            
+            <!-- Description -->
+            <p style="font-size: 15px; color: #6b7280; margin: 0 0 28px 0; text-align: center; line-height: 1.6;">
+                We couldn't find <strong style="color: #374151;">"${termName}"</strong> in our local database.
+            </p>
+            
+            <!-- Perplexity Card -->
+            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #3b82f6; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: start; gap: 16px;">
+                    <div style="width: 48px; height: 48px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#3b82f6"/>
+                            <path d="M2 17L12 22L22 17" stroke="#3b82f6" stroke-width="2" fill="none"/>
+                            <path d="M2 12L12 17L22 12" stroke="#3b82f6" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1e40af;">
+                            Search with Perplexity AI
+                        </h3>
+                        <p style="margin: 0; font-size: 13px; color: #1e3a8a; line-height: 1.5;">
+                            Get comprehensive, AI-powered answers from across the internet
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Buttons -->
+            <div style="display: flex; gap: 12px;">
+                <button id="cancelNotFoundBtn" style="flex: 1; padding: 12px 20px; border: 2px solid #e5e7eb; background: white; color: #6b7280; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;">
+                    Cancel
+                </button>
+                <button id="openPerplexityBtn" style="flex: 1; padding: 12px 20px; border: none; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); font-family: inherit;">
+                    <span style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="M21 21l-4.35-4.35"></path>
+                        </svg>
+                        Search Now
+                    </span>
+                </button>
+            </div>
+        </div>
+        
+        <style>
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-20px) scale(0.95);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+            
+            #cancelNotFoundBtn:hover {
+                background: #f9fafb;
+                border-color: #d1d5db;
+            }
+            
+            #openPerplexityBtn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+            }
+            
+            #openPerplexityBtn:active {
+                transform: translateY(0);
+            }
+        </style>
+    `;
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    document.getElementById('cancelNotFoundBtn').addEventListener('click', () => {
+        modal.style.opacity = '0';
+        setTimeout(() => modal.remove(), 200);
+    });
+    
+    document.getElementById('openPerplexityBtn').addEventListener('click', () => {
+        openPerplexityForTerm(termName);
+        modal.style.opacity = '0';
+        setTimeout(() => modal.remove(), 200);
+    });
+}
+
+// Open Perplexity for the term
+function openPerplexityForTerm(termName) {
+    // Check internet connection
+    if (!window.navigator.onLine) {
+        showNotification('⚠️ No Internet Connection - Cannot open Perplexity');
+        return;
+    }
+    
+    // Open Perplexity
+    const perplexityUrl = `https://www.perplexity.ai/search?q=${encodeURIComponent(termName)}`;
+    window.open(perplexityUrl, '_blank');
+    showNotification('🤖 Perplexity opened in new tab');
 }
 
 // Format Indian timestamp
@@ -626,6 +802,91 @@ function formatIndianTime(timestamp) {
 }
 
 // Render term detail (ORIGINAL QUIZ FORMAT PRESERVED)
+// Generate customization status display
+function generateCustomizationStatus(meta, term) {
+    const statuses = [];
+    
+    // Check favorite
+    if (meta.favorite) {
+        statuses.push({ icon: '⭐', text: 'Favorited', color: '#FFD700' });
+    }
+    
+    // Check bookmark
+    if (meta.bookmark) {
+        statuses.push({ icon: '🔖', text: 'Bookmarked', color: '#667eea' });
+    }
+    
+    // Check difficulty
+    if (meta.difficulty && meta.difficulty !== 'unknown') {
+        const diffLabels = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+        const diffColors = { easy: '#10b981', medium: '#f59e0b', hard: '#ef4444' };
+        statuses.push({ 
+            icon: meta.difficulty === 'easy' ? '✅' : meta.difficulty === 'medium' ? '⚠️' : '🔥', 
+            text: diffLabels[meta.difficulty], 
+            color: diffColors[meta.difficulty] 
+        });
+    }
+    
+    // Check rating
+    if (meta.rating && meta.rating > 0) {
+        statuses.push({ 
+            icon: '⭐', 
+            text: `${meta.rating}-Star Rated`, 
+            color: '#FFD700' 
+        });
+    }
+    
+    // Check important level
+    if (meta.important_level && meta.important_level !== 'none') {
+        const impLabels = { low: 'Low Priority', medium: 'Medium Priority', high: 'High Priority', critical: 'Critical' };
+        const impIcons = { low: '🟢', medium: '🟡', high: '🟠', critical: '🔴' };
+        const impColors = { low: '#10b981', medium: '#fbbf24', high: '#f97316', critical: '#dc2626' };
+        statuses.push({ 
+            icon: impIcons[meta.important_level], 
+            text: impLabels[meta.important_level], 
+            color: impColors[meta.important_level] 
+        });
+    }
+    
+    // Check notes
+    if (meta.notes && meta.notes.trim().length > 0) {
+        statuses.push({ icon: '📝', text: 'Has Notes', color: '#8b5cf6' });
+    }
+    
+    // Check collections - get from userCollections
+    const termCollections = userCollections.filter(col => 
+        col.terms && col.terms.some(t => t === term)
+    );
+    
+    if (termCollections.length > 0) {
+        termCollections.forEach(col => {
+            statuses.push({ 
+                icon: '📁', 
+                text: `In "${col.name}"`, 
+                color: '#667eea' 
+            });
+        });
+    }
+    
+    if (statuses.length === 0) {
+        return ''; // Don't show section if no customizations
+    }
+    
+    return `
+        <div style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 12px; padding: 16px; margin: 20px 0; border: 2px solid #d1d5db;">
+            <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">📌 Your Customizations</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                ${statuses.map(s => `
+                    <span style="display: inline-flex; align-items: center; gap: 6px; background: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; color: ${s.color}; border: 2px solid ${s.color}20; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <span style="font-size: 16px;">${s.icon}</span>
+                        <span>${s.text}</span>
+                    </span>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
 function renderTermDetail(data) {
     const container = document.getElementById('termContent');
     const meta = data.meta || {};
@@ -704,6 +965,17 @@ function renderTermDetail(data) {
                 </div>
             </div>
             
+            <!-- Read Term Aloud Button -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 16px; margin: 16px 0; display: flex; align-items: center; justify-content: space-between;">
+                <div style="color: white;">
+                    <strong style="font-size: 16px;">🔊 Listen to this term</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Click buttons below to hear definitions and key points read aloud</p>
+                </div>
+                <button onclick="speakText('${escapeHtml(data.term)}', 'readTermBtn')" id="readTermBtn" class="read-aloud-btn" style="padding: 12px 24px; background: white; color: #667eea; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    🔊 Read Term Name
+                </button>
+            </div>
+            
             <!-- Term Action Bar -->
             <div class="term-actions">
                 <button onclick="toggleFavorite()" class="action-btn ${meta.favorite ? 'active' : ''}" id="favoriteBtn">
@@ -734,6 +1006,16 @@ function renderTermDetail(data) {
                         `).join('')}
                     </div>
                 </div>
+                <div class="action-group">
+                    <label>Important:</label>
+                    <select onchange="setImportant(this.value)" class="select-input compact" id="importantSelect">
+                        <option value="none" ${(meta.important_level || 'none') === 'none' ? 'selected' : ''}>None</option>
+                        <option value="low" ${meta.important_level === 'low' ? 'selected' : ''}>🟢 Low</option>
+                        <option value="medium" ${meta.important_level === 'medium' ? 'selected' : ''}>🟡 Medium</option>
+                        <option value="high" ${meta.important_level === 'high' ? 'selected' : ''}>🟠 High</option>
+                        <option value="critical" ${meta.important_level === 'critical' ? 'selected' : ''}>🔴 Critical</option>
+                    </select>
+                </div>
                 <button onclick="toggleNotes()" class="action-btn">
                     <span class="action-icon">📝</span>
                     <span>Notes</span>
@@ -754,17 +1036,30 @@ function renderTermDetail(data) {
                 <button onclick="saveNotes()" class="primary-btn">Save Notes</button>
             </div>
             
+            <!-- Customization Status Section -->
+            ${generateCustomizationStatus(meta, data.term)}
+            
             ${getExternalResourceHtml(data.term)} ${data.definition ? `
                 <div class="section">
-                    <h2 class="section-title">📖 Definition</h2>
-                    <p>${data.definition}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h2 class="section-title" style="margin: 0;">📖 Definition</h2>
+                        <button onclick="speakText(\`${data.definition.replace(/`/g, '').replace(/'/g, "\\'")}\`, 'readDefBtn')" id="readDefBtn" class="read-aloud-btn" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                            🔊 Read Aloud
+                        </button>
+                    </div>
+                    <p id="definitionText">${data.definition}</p>
                 </div>
             ` : ''}
             
             ${data.keyPoints && data.keyPoints.length > 0 ? `
                 <div class="section">
-                    <h2 class="section-title">🔑 Key Points</h2>
-                    <ul>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h2 class="section-title" style="margin: 0;">🔑 Key Points</h2>
+                        <button onclick="speakText(\`${data.keyPoints.join('. ').replace(/`/g, '').replace(/'/g, "\\'")}\`, 'readKeyBtn')" id="readKeyBtn" class="read-aloud-btn" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                            🔊 Read Aloud
+                        </button>
+                    </div>
+                    <ul id="keyPointsText">
                         ${data.keyPoints.map(kp => `<li>${kp}</li>`).join('')}
                     </ul>
                 </div>
@@ -772,8 +1067,13 @@ function renderTermDetail(data) {
             
             ${data.example ? `
                 <div class="section">
-                    <h2 class="section-title">💡 Example</h2>
-                    <p>${data.example}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h2 class="section-title" style="margin: 0;">💡 Example</h2>
+                        <button onclick="speakText(\`${data.example.replace(/`/g, '').replace(/'/g, "\\'")}\`, 'readExampleBtn')" id="readExampleBtn" class="read-aloud-btn" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                            🔊 Read Aloud
+                        </button>
+                    </div>
+                    <p id="exampleText">${data.example}</p>
                 </div>
             ` : ''}
             
@@ -816,6 +1116,7 @@ async function toggleFavorite() {
     btn.querySelector('.action-icon').textContent = newValue ? '★' : '☆';
     btn.classList.toggle('active', newValue === 1);
     updateQuickAccessCounts();
+    showNotification(newValue ? '⭐ Added to Favorites!' : '☆ Removed from Favorites');
 }
 
 async function toggleBookmark() {
@@ -827,6 +1128,7 @@ async function toggleBookmark() {
     btn.querySelector('span:last-child').textContent = newValue ? 'Bookmarked' : 'Bookmark';
     btn.classList.toggle('active', newValue === 1);
     updateQuickAccessCounts();
+    showNotification(newValue ? '🔖 Bookmark Added!' : '🔖 Bookmark Removed');
 }
 
 async function setDifficulty(difficulty) {
@@ -834,6 +1136,8 @@ async function setDifficulty(difficulty) {
     await saveTermMeta({ difficulty });
     currentTerm.meta.difficulty = difficulty;
     updateQuickAccessCounts();
+    const labels = { easy: '✅ Easy', medium: '⚠️ Medium', hard: '🔥 Hard', unknown: 'Not Set' };
+    showNotification(`${labels[difficulty]} - Difficulty Set!`);
 }
 
 async function setRating(rating) {
@@ -841,6 +1145,21 @@ async function setRating(rating) {
     await saveTermMeta({ rating });
     currentTerm.meta.rating = rating;
     renderTermDetail(currentTerm);
+    updateStats(); // Update sidebar immediately
+    if (rating > 0) {
+        showNotification(`${'⭐'.repeat(rating)} Rating Saved!`);
+    } else {
+        showNotification('Rating Cleared');
+    }
+}
+
+async function setImportant(level) {
+    if (!currentTerm) return;
+    await saveTermMeta({ important_level: level });
+    currentTerm.meta.important_level = level;
+    const labels = { none: 'Not Set', low: '🟢 Low Priority', medium: '🟡 Medium Priority', high: '🟠 High Priority', critical: '🔴 Critical Priority' };
+    showNotification(`${labels[level]} - Importance Set!`);
+    updateStats(); // Update sidebar immediately
 }
 
 function toggleNotes() {
@@ -1042,8 +1361,11 @@ async function filterHistory(period) {
 
 
 // Add term to recent history in database
+// Session tracking - uses global sessionTerms and sessionViewedSet
+
 async function addRecentTerm(term, subject) {
     try {
+        // Save to database for history
         await fetch('/api/recent-terms', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1053,8 +1375,18 @@ async function addRecentTerm(term, subject) {
                 subject: subject
             })
         });
-        // Update session count
-        updateStats();
+        
+        // Track unique session views in memory
+        if (!sessionViewedSet.has(term)) {
+            sessionViewedSet.add(term);
+            sessionTerms = sessionViewedSet.size;
+            
+            // Update session count display immediately
+            const sessionCountEl = document.getElementById('sessionTermsCount');
+            if (sessionCountEl) {
+                sessionCountEl.textContent = sessionTerms;
+            }
+        }
     } catch (error) {
         console.error('Failed to save recent term:', error);
     }
@@ -1088,18 +1420,45 @@ function closeHistoryModal() {
 // Show notification
 function showNotification(message) {
     const notification = document.createElement('div');
-    notification.className = 'notification';
     notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.4;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 999999;
+        opacity: 0;
+        transition: all 0.3s ease;
+        max-width: 350px;
+        width: auto;
+        height: auto;
+        min-height: auto;
+        max-height: none;
+        display: inline-block;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+    `;
     document.body.appendChild(notification);
 
     setTimeout(() => {
-        notification.classList.add('show');
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(-50%) translateY(0)';
     }, 10);
 
     setTimeout(() => {
-        notification.classList.remove('show');
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(-50%) translateY(-20px)';
         setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    }, 2500);
 }
 
 // Collections Management - Enhanced GUI
@@ -1165,22 +1524,17 @@ function createCollectionFromLevels() {
     const name = levels.join(' > ');
 
     const collection = {
+        id: Date.now(),
         name: name,
         levels: levels,
         terms: currentTerm ? [currentTerm.term] : [],
-        created: new Date().toISOString(),
-        dbSaved: false  // Mark as not yet saved to DB
+        created: new Date().toISOString()
     };
 
     userCollections.push(collection);
-    
-    // Save to database
-    saveCollections().then(() => {
-        renderCollectionsView();
-        showNotification(`Created and added to "${name}"`);
-    });
-    
+   // Collections auto-saved to database via API
     closeCollectionModal();
+    showNotification(`Created and added to "${name}"`);
 }
 
 function addTermToCollection(collectionIndex) {
@@ -1189,13 +1543,8 @@ function addTermToCollection(collectionIndex) {
     const collection = userCollections[collectionIndex];
     if (!collection.terms.includes(currentTerm.term)) {
         collection.terms.push(currentTerm.term);
-        collection.modified = true; // Mark as modified
-        
-        // Save to database
-        saveCollections().then(() => {
-            renderCollectionsView();
-            showNotification(`Added to "${collection.name}"`);
-        });
+       // Collections auto-saved to database via API
+        showNotification(`Added to "${collection.name}"`);
     } else {
         showNotification('Already in this list');
     }
@@ -1205,55 +1554,6 @@ function addTermToCollection(collectionIndex) {
 function closeCollectionModal() {
     const modal = document.getElementById('collectionModal');
     if (modal) modal.remove();
-}
-
-// Save collections to database
-async function saveCollections() {
-    try {
-        // Save each collection that doesn't have a database ID yet, or update existing ones
-        for (const collection of userCollections) {
-            if (!collection.dbSaved) {
-                // Create new collection
-                const response = await fetch('/api/collections', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: 'local',
-                        name: collection.name,
-                        description: collection.description || '',
-                        terms: collection.terms || []
-                    })
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    collection.id = result.id; // Update with DB ID
-                    collection.dbSaved = true;
-                } else {
-                    console.error('Failed to save collection:', collection.name);
-                }
-            } else if (collection.modified) {
-                // Update existing collection
-                const response = await fetch(`/api/collections/${collection.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: collection.name,
-                        description: collection.description || '',
-                        terms: collection.terms || []
-                    })
-                });
-                
-                if (response.ok) {
-                    collection.modified = false;
-                } else {
-                    console.error('Failed to update collection:', collection.name);
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Error saving collections:', error);
-    }
 }
 
 async function loadCollections() {
@@ -1370,21 +1670,18 @@ function createNewCollection() {
     const name = levels.join(' > ');
 
     const collection = {
+        id: Date.now(),
         name: name,
         levels: levels,
         terms: [],
-        created: new Date().toISOString(),
-        dbSaved: false  // Mark as not yet saved to DB
+        created: new Date().toISOString()
     };
 
     userCollections.push(collection);
-    
-    // Save to database
-    saveCollections().then(() => {
-        document.getElementById('createCollectionModal').remove();
-        showNotification(`Collection "${name}" created!`);
-        renderCollectionsView();
-    });
+    // Collections auto-saved to database via API
+    document.getElementById('createCollectionModal').remove();
+    showNotification(`Collection "${name}" created!`);
+    renderCollectionsView();
 }
 
 function editCollection(index) {
@@ -1439,14 +1736,11 @@ function saveCollectionEdit(index) {
 
     userCollections[index].name = name;
     userCollections[index].levels = levels;
-    userCollections[index].modified = true; // Mark as modified
+   // Collections auto-saved to database via API
 
-    // Save to database
-    saveCollections().then(() => {
-        document.getElementById('editCollectionModal').remove();
-        showNotification('Collection updated!');
-        renderCollectionsView();
-    });
+    document.getElementById('editCollectionModal').remove();
+    showNotification('Collection updated!');
+    renderCollectionsView();
 }
 
 function viewCollection(index) {
@@ -1498,26 +1792,10 @@ function removeFromCollection(collectionIndex, termName) {
     showNotification('Term removed from collection');
 }
 
-async function deleteCollection(index) {
-    const collection = userCollections[index];
-    if (confirm(`Delete "${collection.name}"?`)) {
-        // Delete from database if it has an ID
-        if (collection.id) {
-            try {
-                const response = await fetch(`/api/collections/${collection.id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (!response.ok) {
-                    console.error('Failed to delete collection from database');
-                }
-            } catch (error) {
-                console.error('Error deleting collection:', error);
-            }
-        }
-        
-        // Remove from local array
+function deleteCollection(index) {
+    if (confirm(`Delete "${userCollections[index].name}"?`)) {
         userCollections.splice(index, 1);
+        // Collections auto-saved to database via API
         renderCollectionsView();
         showNotification('Collection deleted');
     }
@@ -1563,55 +1841,119 @@ async function showFilteredTerms(filterType, title, param = null) {
     }
 }
 
-// Statistics view with clickable tiles
+// Statistics view with comprehensive data
 async function renderStatsView() {
     try {
         const response = await fetch('/api/stats/overview');
         const stats = await response.json();
+        
+        // Get rating counts and important counts
+        const ratingResponse = await fetch('/api/meta/counts');
+        const ratingStats = await ratingResponse.json();
 
         const container = document.getElementById('statsContent');
         container.innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-card-label">Total Terms</div>
-                    <div class="stat-card-value">${stats.total_terms}</div>
+            <div class="stats-grid" style="animation: fadeInUp 0.5s;">
+                <div class="stat-card" style="transition: transform 0.3s;">
+                    <div class="stat-card-label">📚 Total Terms</div>
+                    <div class="stat-card-value">${stats.total_terms || 0}</div>
                 </div>
-                <div class="stat-card clickable" onclick="showFilteredTerms('favorites', 'Favorite Terms')">
-                    <div class="stat-card-label">Favorites</div>
-                    <div class="stat-card-value">${stats.favorites}</div>
+                <div class="stat-card clickable" onclick="showFilteredTerms('favorites', 'Favorite Terms')" style="transition: transform 0.3s; cursor: pointer;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label">⭐ Favorites</div>
+                    <div class="stat-card-value">${stats.favorites || 0}</div>
                 </div>
-                <div class="stat-card clickable" onclick="showFilteredTerms('bookmarks', 'Bookmarked Terms')">
-                    <div class="stat-card-label">Bookmarks</div>
-                    <div class="stat-card-value">${stats.bookmarks}</div>
+                <div class="stat-card clickable" onclick="showFilteredTerms('bookmarks', 'Bookmarked Terms')" style="transition: transform 0.3s; cursor: pointer;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label">🔖 Bookmarks</div>
+                    <div class="stat-card-value">${stats.bookmarks || 0}</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-card-label">Recent Views (7 days)</div>
-                    <div class="stat-card-value">${stats.recent_views}</div>
+                <div class="stat-card clickable" onclick="showFilteredTerms('notes', 'Terms with Notes')" style="transition: transform 0.3s; cursor: pointer;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label">📝 With Notes</div>
+                    <div class="stat-card-value">${ratingStats.with_notes || 0}</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-card-label">My Collections</div>
+                <div class="stat-card" style="transition: transform 0.3s;">
+                    <div class="stat-card-label">📂 Collections</div>
                     <div class="stat-card-value">${userCollections.length}</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-card-label">Session Views</div>
+                <div class="stat-card" style="transition: transform 0.3s;">
+                    <div class="stat-card-label">🔥 Session</div>
                     <div class="stat-card-value">${sessionTerms}</div>
                 </div>
             </div>
             
-            <div style="margin-top: 40px;">
-                <h3 style="margin-bottom: 20px;">Subject Distribution</h3>
-                <div class="subjects-grid compact">
-                    ${allSubjects.map(s => `
-                        <div class="subject-tile-small clickable" onclick="filterBySubject('${escapeHtml(s.subject)}')">
-                            <div class="subject-tile-name">${escapeHtml(s.subject)}</div>
-                            <div class="subject-tile-count">${s.count} terms</div>
-                        </div>
-                    `).join('')}
+            <h3 style="margin-top: 40px; margin-bottom: 20px; animation: fadeIn 0.5s;">⭐ Rating Distribution (Click to Filter)</h3>
+            <div class="stats-grid" style="animation: fadeInUp 0.6s;">
+                <div class="stat-card clickable" onclick="searchByRating(5)" style="background: #ffd700; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05) rotate(2deg)'" onmouseout="this.style.transform='scale(1) rotate(0)'">
+                    <div class="stat-card-label" style="color: #000;">★★★★★ 5 Stars</div>
+                    <div class="stat-card-value" style="color: #000;">${ratingStats.rating_5 || 0}</div>
                 </div>
+                <div class="stat-card clickable" onclick="searchByRating(4)" style="background: #90EE90; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05) rotate(-2deg)'" onmouseout="this.style.transform='scale(1) rotate(0)'">
+                    <div class="stat-card-label" style="color: #000;">★★★★ 4 Stars</div>
+                    <div class="stat-card-value" style="color: #000;">${ratingStats.rating_4 || 0}</div>
+                </div>
+                <div class="stat-card clickable" onclick="searchByRating(3)" style="background: #87CEEB; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05) rotate(2deg)'" onmouseout="this.style.transform='scale(1) rotate(0)'">
+                    <div class="stat-card-label" style="color: #000;">★★★ 3 Stars</div>
+                    <div class="stat-card-value" style="color: #000;">${ratingStats.rating_3 || 0}</div>
+                </div>
+                <div class="stat-card clickable" onclick="searchByRating(2)" style="background: #FFB6C1; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05) rotate(-2deg)'" onmouseout="this.style.transform='scale(1) rotate(0)'">
+                    <div class="stat-card-label" style="color: #000;">★★ 2 Stars</div>
+                    <div class="stat-card-value" style="color: #000;">${ratingStats.rating_2 || 0}</div>
+                </div>
+                <div class="stat-card clickable" onclick="searchByRating(1)" style="background: #DDA0DD; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05) rotate(2deg)'" onmouseout="this.style.transform='scale(1) rotate(0)'">
+                    <div class="stat-card-label" style="color: #000;">★ 1 Star</div>
+                    <div class="stat-card-value" style="color: #000;">${ratingStats.rating_1 || 0}</div>
+                </div>
+            </div>
+            
+            <h3 style="margin-top: 40px; margin-bottom: 20px; animation: fadeIn 0.7s;">🎯 Important Terms (Click to Filter)</h3>
+            <div class="stats-grid" style="animation: fadeInUp 0.8s;">
+                <div class="stat-card clickable" onclick="searchByImportance('critical')" style="background: #FF4444; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label" style="color: #fff;">🔴 Critical</div>
+                    <div class="stat-card-value" style="color: #fff;">${ratingStats.important_critical || 0}</div>
+                </div>
+                <div class="stat-card clickable" onclick="searchByImportance('high')" style="background: #FF8C00; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label" style="color: #fff;">🟠 High</div>
+                    <div class="stat-card-value" style="color: #fff;">${ratingStats.important_high || 0}</div>
+                </div>
+                <div class="stat-card clickable" onclick="searchByImportance('medium')" style="background: #FFA500; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label" style="color: #fff;">🟡 Medium</div>
+                    <div class="stat-card-value" style="color: #fff;">${ratingStats.important_medium || 0}</div>
+                </div>
+                <div class="stat-card clickable" onclick="searchByImportance('low')" style="background: #32CD32; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label" style="color: #fff;">🟢 Low</div>
+                    <div class="stat-card-value" style="color: #fff;">${ratingStats.important_low || 0}</div>
+                </div>
+            </div>
+            
+            <h3 style="margin-top: 40px; margin-bottom: 20px; animation: fadeIn 0.9s;">📊 Difficulty Breakdown</h3>
+            <div class="stats-grid" style="animation: fadeInUp 1s;">
+                <div class="stat-card" style="background: #84fab0; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label" style="color: #000;">✅ Easy</div>
+                    <div class="stat-card-value" style="color: #000;">${ratingStats.easy || 0}</div>
+                </div>
+                <div class="stat-card" style="background: #ffd89b; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label" style="color: #000;">⚠️ Medium</div>
+                    <div class="stat-card-value" style="color: #000;">${ratingStats.medium || 0}</div>
+                </div>
+                <div class="stat-card" style="background: #ff6b6b; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card-label" style="color: #fff;">🔥 Hard</div>
+                    <div class="stat-card-value" style="color: #fff;">${ratingStats.hard || 0}</div>
+                </div>
+            </div>
+            
+            <h3 style="margin-top: 40px; margin-bottom: 20px; animation: fadeIn 1.1s;">📚 Subject Distribution (${allSubjects.length} Subjects)</h3>
+            <div class="subjects-grid compact" style="animation: fadeInUp 1.2s;">
+                ${allSubjects.map(s => `
+                    <div class="subject-tile-small clickable" onclick="filterBySubject('${escapeHtml(s.subject)}')" style="transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        <div class="subject-tile-name">${escapeHtml(s.subject)}</div>
+                        <div class="subject-tile-count">${s.count} terms</div>
+                    </div>
+                `).join('')}
             </div>
         `;
     } catch (error) {
         console.error('Error loading stats:', error);
+        const container = document.getElementById('statsContent');
+        container.innerHTML = '<p>Error loading statistics. Please refresh.</p>';
     }
 }
 
@@ -1628,16 +1970,16 @@ async function loadHomework() {
             return;
         }
         
-        container.innerHTML = homework.map((hw, i) => `
+        container.innerHTML = homework.map((hw) => `
             <div class="homework-item">
                 <div class="homework-header">
                     <h3 class="homework-title">${escapeHtml(hw.term)}</h3>
-                    <span class="homework-date">${hw.date}</span>
+                    <span class="homework-date">${hw.due_date || hw.date}</span>
                 </div>
                 ${hw.notes ? `<p class="homework-notes">${escapeHtml(hw.notes)}</p>` : ''}
                 <div class="homework-actions">
                     <button onclick="viewTerm('${escapeHtml(hw.term)}')" class="primary-btn compact">View Term</button>
-                    <button onclick="deleteHomework(${i})" class="secondary-btn compact">Delete</button>
+                    <button onclick="deleteHomework(${hw.id})" class="secondary-btn compact">Delete</button>
                 </div>
             </div>
         `).join('');
@@ -1671,37 +2013,63 @@ function selectHwTerm(term) {
     document.getElementById('hwSuggestions').innerHTML = '';
 }
 
-function saveHomework() {
-    const term = document.getElementById('hwTermInput').value;
+async function saveHomework() {
+    const term = document.getElementById('hwTermInput').value.trim();
     const date = document.getElementById('hwDate').value;
-    const notes = document.getElementById('hwNotes').value;
+    const notes = document.getElementById('hwNotes').value.trim();
 
     if (!term || !date) {
         showNotification('Please enter term and date');
         return;
     }
 
-    
-    homework.push({ term, date, notes, added: new Date().toISOString() });
-   
+    try {
+        const response = await fetch('/api/homework', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: 'local',
+                term: term,
+                due_date: date,
+                notes: notes
+            })
+        });
 
-    document.getElementById('homeworkModal').classList.remove('active');
-    document.getElementById('hwTermInput').value = '';
-    document.getElementById('hwDate').value = '';
-    document.getElementById('hwNotes').value = '';
+        if (response.ok) {
+            document.getElementById('homeworkModal').classList.remove('active');
+            document.getElementById('hwTermInput').value = '';
+            document.getElementById('hwDate').value = '';
+            document.getElementById('hwNotes').value = '';
 
-    loadHomework();
-    showNotification('Homework added!');
+            await loadHomework();
+            showNotification('✅ Homework saved successfully!');
+        } else {
+            showNotification('❌ Failed to save homework');
+        }
+    } catch (error) {
+        console.error('Error saving homework:', error);
+        showNotification('❌ Error saving homework');
+    }
 }
 
-function deleteHomework(index) {
+async function deleteHomework(hwId) {
     if (!confirm('Delete this homework?')) return;
 
-  
-    homework.splice(index, 1);
-  
-    loadHomework();
-    showNotification('Homework deleted');
+    try {
+        const response = await fetch(`/api/homework/${hwId}?user_id=local`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            await loadHomework();
+            showNotification('🗑️ Homework deleted');
+        } else {
+            showNotification('❌ Failed to delete');
+        }
+    } catch (error) {
+        console.error('Error deleting homework:', error);
+        showNotification('❌ Error deleting homework');
+    }
 }
 
 // Utility functions
@@ -2064,17 +2432,39 @@ async function exitApp() {
     }
 
     // ---------- 3. Full-page screenshot (html2canvas dynamic load) ----------
-    async function ensureHtml2Canvas() {
-        if (window.html2canvas) return window.html2canvas;
-        return new Promise((resolve, reject) => {
-            const s = document.createElement('script');
-            s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-            s.crossOrigin = 'anonymous';
-            s.onload = () => resolve(window.html2canvas || window.html2canvas); // html2canvas creates window.html2canvas
-            s.onerror = (e) => reject(e);
-            document.head.appendChild(s);
-        });
-    }
+  // ---------- 3. Full-page screenshot (html2canvas dynamic load) ----------
+async function ensureHtml2Canvas() {
+    // 1. Check if it's already loaded (if the script was loaded globally before this function runs)
+    if (window.html2canvas) return window.html2canvas;
+
+    // 2. Define the path to your local file
+    const localPath = '/web/vender/html2canvas.min.js';
+
+    // 3. Dynamic loading logic
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        // Use the local path here
+        s.src = localPath;
+        s.crossOrigin = 'anonymous'; // Keep this, although often not strictly needed for local scripts
+
+        s.onload = () => {
+            // html2canvas creates window.html2canvas
+            if (window.html2canvas) {
+                resolve(window.html2canvas);
+            } else {
+                // Should not happen if the script loads correctly, but good for robust error handling
+                reject(new Error('html2canvas loaded but window.html2canvas is not defined.'));
+            }
+        }; 
+        
+        s.onerror = (e) => {
+            console.error('Failed to load html2canvas from local path:', localPath, e);
+            reject(new Error(`Failed to load script from ${localPath}`));
+        };
+        
+        document.head.appendChild(s);
+    });
+}
 
     function sanitizeFilenamePart(s) {
         if (!s) return '';
@@ -2217,90 +2607,296 @@ async function exitApp() {
  * @returns {string} The HTML string for the resource section.
  */
 function getExternalResourceHtml(term) {
-    if (!term) return ''; // Safety check
+    if (!term) return '';
 
-    // 1. URL-Encoded Term (used for simple queries)
     const safeTerm = encodeURIComponent(term);
-
-    // 2. Display Term (escaped for HTML safety) - Used only for link titles.
     const displayTerm = typeof escapeHtml === 'function' ? escapeHtml(term) : term;
 
-    // 3. Raw Query Strings (used for complex Google search operators)
-    const ncertQueryString = `${term} site:ncert.nic.in`;
-    const pptQueryString = `${term} filetype:ppt OR filetype:pptx`;
-    const scholarlyQueryString = `${term} site:academia.edu OR site:researchgate.net`;
-    const pdfQueryString = `${term} filetype:pdf`;
-    const quoraGoogleQueryString = `${term} site:quora.com`;
-    const tutorialQueryString = `${term} tutorial OR notes OR guide`;
-
-    // 4. External Site URLs
-    const howStuffWorksUrl = `https://s.howstuffworks.com/serp?q=${safeTerm}`;
-
-    // 5. Specific Khan Academy URLs (using the observed structure)
-    // The query parameter is page_search_query, and we include referer=%2F
-    const khanAcademySimpleUrl = `https://www.khanacademy.org/search?referer=%2F&page_search_query=${safeTerm}`;
-    const khanAcademyArticlesUrl = `https://www.khanacademy.org/search?referer=%2F&page_search_query=${safeTerm}&content_kinds=Article`;
-    const khanAcademyVideosUrl = `https://www.khanacademy.org/search?referer=%2F&page_search_query=${safeTerm}&content_kinds=Video`;
-    const khanAcademyTopicsUrl = `https://www.khanacademy.org/search?referer=%2F&page_search_query=${safeTerm}&content_kinds=Topic`;
-
+    // Check if online - will be updated by checkInternetConnection()
+    const isOnline = window.navigator.onLine;
+    const disabledStyle = !isOnline ? 'opacity: 0.4; pointer-events: none; cursor: not-allowed;' : '';
+    const disabledTitle = !isOnline ? ' (Offline - Internet Required)' : '';
 
     return `
-        <div class="section external-resources">
-            <h2 class="section-title">🔗 External Resources</h2>
+        <div class="section external-resources" id="externalResourcesSection">
+            <h2 class="section-title">🔗 External Resources ${!isOnline ? '<span style="color: #ef4444; font-size: 14px;">(⚠️ Offline)</span>' : '<span style="color: #10b981; font-size: 14px;">(✓ Online)</span>'}</h2>
             <div class="resource-links-grid">
                 
-                <a href="https://www.perplexity.ai/search?q=${safeTerm}" target="_blank" class="resource-link ai-link ai-answer" title="Perplexity: Full Answer">
-                    <span class="link-icon">🤖</span> Perplexity
+                <!-- Priority 1: Perplexity AI -->
+                <a href="https://www.perplexity.ai/search?q=${safeTerm}" target="_blank" class="resource-link ai-link" style="grid-column: 1 / -1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; ${disabledStyle}" title="Perplexity: AI-Powered Answer${disabledTitle}">
+                    <span class="link-icon">🤖</span> Perplexity AI - Full Answer
                 </a>
                 
-                <a href="https://www.google.com/search?q=${encodeURIComponent(tutorialQueryString)}" target="_blank" class="resource-link tutorial-link" title="Search Google for Best Tutorials, Notes, and Guides">
-                    <span class="link-icon">⭐</span> Best Tutorials
-                </a>
-                <a href="https://www.google.com/search?q=${encodeURIComponent(pdfQueryString)}" target="_blank" class="resource-link pdf-link" title="Search Google for PDF Files">
-                    <span class="link-icon">📄</span> PDFs
-                </a>
-                <a href="https://www.google.com/search?q=${encodeURIComponent(pptQueryString)}" target="_blank" class="resource-link ppt-link" title="Search Google for PPT/Presentation Files">
-                    <span class="link-icon">🖥️</span> PPTs
+                <!-- Priority 2: YouTube -->
+                <a href="https://www.youtube.com/results?search_query=${safeTerm}" target="_blank" class="resource-link youtube-link" style="background: #FF0000; color: white; font-weight: 600; ${disabledStyle}" title="Search YouTube Videos${disabledTitle}">
+                    <span class="link-icon">▶️</span> YouTube Videos
                 </a>
                 
-                <a href="https://en.wikipedia.org/wiki/Special:Search?search=${safeTerm}" target="_blank" class="resource-link wiki-link" title="Search Wikipedia">
-                    <span class="link-icon">🌐</span> Wikipedia
-                </a>
-
-                <a href="https://www.google.com/search?q=${encodeURIComponent(quoraGoogleQueryString)}" target="_blank" class="resource-link qa-link" title="Search Quora via Google (Avoids Login)">
-                    <span class="link-icon">💬</span> Quora
-                </a>
-                
-                <a href="https://www.google.com/search?q=${encodeURIComponent(scholarlyQueryString)}" target="_blank" class="resource-link research-link" title="Search Scholarly Articles (Academia/ResearchGate)">
-                    <span class="link-icon">🔬</span> Academia/RG
-                </a>
-                
-                <a href="https://www.google.com/search?q=${encodeURIComponent(ncertQueryString)}" target="_blank" class="resource-link ncert-link" title="Search NCERT/Indian Education Documents">
-                    <span class="link-icon">🇮🇳</span> NCERT
-                </a>
-
-                <a href="${howStuffWorksUrl}" target="_blank" class="resource-link hsw-link" title="Search HowStuffWorks">
-                    <span class="link-icon">⚙️</span> HowStuffWorks
-                </a>
-
-                <a href="${khanAcademySimpleUrl}" target="_blank" class="resource-link khan-link" title="Khan Academy: All Content">
+                <!-- Row 2: Educational -->
+                <a href="https://www.khanacademy.org/search?referer=%2F&page_search_query=${safeTerm}" target="_blank" class="resource-link khan-link" style="${disabledStyle}" title="Khan Academy${disabledTitle}">
                     <span class="link-icon">🎓</span> Khan Academy
                 </a>
-                <a href="${khanAcademyArticlesUrl}" target="_blank" class="resource-link khan-link" title="Khan Academy: Articles">
-                    <span class="link-icon">📰</span> Articles
-                </a>
-                <a href="${khanAcademyVideosUrl}" target="_blank" class="resource-link khan-link" title="Khan Academy: Videos">
-                    <span class="link-icon">🎞️</span> Videos
-                </a>
-                <a href="${khanAcademyTopicsUrl}" target="_blank" class="resource-link khan-link" title="Khan Academy: Courses/Units/Lessons">
-                    <span class="link-icon">📚</span> Courses
+                
+                <a href="https://en.wikipedia.org/wiki/Special:Search?search=${safeTerm}" target="_blank" class="resource-link wiki-link" style="${disabledStyle}" title="Wikipedia${disabledTitle}">
+                    <span class="link-icon">🌐</span> Wikipedia
                 </a>
                 
-                <a href="https://www.youtube.com/results?search_query=${safeTerm}" target="_blank" class="resource-link youtube-link" title="Search YouTube Videos">
-                    <span class="link-icon">▶️</span> YouTube
+                <!-- Row 3: Google Search Variations -->
+                <a href="https://www.google.com/search?q=${encodeURIComponent(term + ' tutorial OR notes OR guide')}" target="_blank" class="resource-link tutorial-link" style="${disabledStyle}" title="Best Tutorials${disabledTitle}">
+                    <span class="link-icon">⭐</span> Tutorials
+                </a>
+                
+                <a href="https://www.google.com/search?q=${encodeURIComponent(term + ' filetype:pdf')}" target="_blank" class="resource-link pdf-link" style="${disabledStyle}" title="PDF Files${disabledTitle}">
+                    <span class="link-icon">📄</span> PDFs
+                </a>
+                
+                <!-- Row 4: Specialized -->
+                <a href="https://www.google.com/search?q=${encodeURIComponent(term + ' site:ncert.nic.in')}" target="_blank" class="resource-link ncert-link" style="${disabledStyle}" title="NCERT${disabledTitle}">
+                    <span class="link-icon">🇮🇳</span> NCERT
+                </a>
+                
+                <a href="https://www.google.com/search?q=${encodeURIComponent(term + ' site:quora.com')}" target="_blank" class="resource-link qa-link" style="${disabledStyle}" title="Quora${disabledTitle}">
+                    <span class="link-icon">💬</span> Quora
                 </a>
                 
             </div>
         </div>
+        <script>
+            // Update external resources based on internet connectivity
+            setInterval(() => {
+                const section = document.getElementById('externalResourcesSection');
+                if (section) {
+                    const isOnline = window.navigator.onLine;
+                    const links = section.querySelectorAll('.resource-link');
+                    const title = section.querySelector('.section-title');
+                    
+                    links.forEach(link => {
+                        if (!isOnline) {
+                            link.style.opacity = '0.4';
+                            link.style.pointerEvents = 'none';
+                            link.style.cursor = 'not-allowed';
+                        } else {
+                            link.style.opacity = '1';
+                            link.style.pointerEvents = 'auto';
+                            link.style.cursor = 'pointer';
+                        }
+                    });
+                    
+                    // Update status indicator
+                    const statusText = title.querySelector('span:last-child');
+                    if (statusText) {
+                        if (!isOnline) {
+                            statusText.innerHTML = '<span style="color: #ef4444; font-size: 14px;">(⚠️ Offline)</span>';
+                        } else {
+                            statusText.innerHTML = '<span style="color: #10b981; font-size: 14px;">(✓ Online)</span>';
+                        }
+                    }
+                }
+            }, 2000); // Check every 2 seconds
+        </script>
     `;
+}
+
+// Search by rating
+async function searchByRating(rating) {
+    showLoading();
+    try {
+        const response = await fetch(`/api/filter?rating=${rating}&user_id=local`);
+        const terms = await response.json();
+        
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('discoverView').classList.add('active');
+        
+        const container = document.getElementById('discoverContent');
+        container.innerHTML = `
+            <div class="view-header">
+                <h2>⭐ ${rating}-Star Rated Terms (${terms.length})</h2>
+                <button onclick="loadAllTerms()" class="secondary-btn">Back to All</button>
+            </div>
+            ${terms.length === 0 ? '<div class="empty-state"><p>No terms rated with ' + rating + ' stars yet</p></div>' : `
+                <div class="terms-grid">
+                    ${terms.map(term => `
+                        <div class="term-card" onclick="viewTerm('${escapeHtml(term.term)}')">
+                            <h3 class="term-card-title">${escapeHtml(term.term)}</h3>
+                            <span class="term-card-subject">${escapeHtml(term.subject || 'N/A')}</span>
+                            <div style="margin-top: 8px; color: #ffd700;">${'⭐'.repeat(rating)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `}
+        `;
+        hideLoading();
+    } catch (error) {
+        console.error('Error filtering by rating:', error);
+        hideLoading();
+    }
+}
+
+// Welcome Splash Screen - shows on every app launch/refresh
+window.closeWelcomeSplash = function() {
+    const splash = document.getElementById('welcomeSplash');
+    if (splash) {
+        splash.style.animation = 'fadeOut 0.5s';
+        setTimeout(() => {
+            splash.style.display = 'none';
+        }, 500);
+    }
+}
+
+// Splash is set to display:block in HTML, so it always shows on page load
+// User must click "Let's Begin" to proceed
+
+// Search by importance level
+async function searchByImportance(level) {
+    showLoading();
+    try {
+        const response = await fetch(`/api/filter?important_level=${level}&user_id=local`);
+        const terms = await response.json();
+        
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('discoverView').classList.add('active');
+        
+        const levelNames = {
+            'critical': '🔴 Critical',
+            'high': '🟠 High',
+            'medium': '🟡 Medium',
+            'low': '🟢 Low'
+        };
+        
+        const container = document.getElementById('discoverContent');
+        container.innerHTML = `
+            <div class="view-header">
+                <h2>${levelNames[level]} Important Terms (${terms.length})</h2>
+                <button onclick="loadAllTerms()" class="secondary-btn">Back to All</button>
+            </div>
+            ${terms.length === 0 ? '<div class="empty-state"><p>No terms marked as ' + levelNames[level] + ' yet</p></div>' : `
+                <div class="terms-grid">
+                    ${terms.map(term => `
+                        <div class="term-card" onclick="viewTerm('${escapeHtml(term.term)}')">
+                            <h3 class="term-card-title">${escapeHtml(term.term)}</h3>
+                            <span class="term-card-subject">${escapeHtml(term.subject || 'N/A')}</span>
+                            <div style="margin-top: 8px;">${levelNames[level]}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `}
+        `;
+        hideLoading();
+    } catch (error) {
+        console.error('Error filtering by importance:', error);
+        hideLoading();
+    }
+}
+
+// Load dynamic counts for welcome splash
+// Removed loadWelcomeCounts - splash screen now shows static counts immediately
+
+// Removed loadWelcomeCounts - splash screen now shows static counts immediately
+
+// No localStorage cleanup needed - splash preference stored in database
+
+
+// Global search bar functionality
+document.addEventListener('DOMContentLoaded', () => {
+    const globalSearchInput = document.getElementById('globalSearchInput');
+    const globalSearchResults = document.getElementById('globalSearchResults');
+    
+    if (globalSearchInput) {
+        globalSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            
+            if (query.length < 2) {
+                globalSearchResults.style.display = 'none';
+                return;
+            }
+            
+            // Filter terms
+            const results = allTerms.filter(t => 
+                t.term.toLowerCase().includes(query)
+            ).slice(0, 10);
+            
+            if (results.length === 0) {
+                globalSearchResults.innerHTML = '<div style="padding: 12px; color: #999;">No terms found</div>';
+                globalSearchResults.style.display = 'block';
+                return;
+            }
+            
+            globalSearchResults.innerHTML = results.map(term => `
+                <div style="padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s;" 
+                     onmouseover="this.style.background='#f5f5f5'" 
+                     onmouseout="this.style.background='white'"
+                     onclick="viewTermFromGlobalSearch('${escapeHtml(term.term)}')">
+                    <div style="font-weight: 600; color: #333;">${escapeHtml(term.term)}</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">${escapeHtml(term.subject)}</div>
+                </div>
+            `).join('');
+            
+            globalSearchResults.style.display = 'block';
+        });
+        
+        // Close results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!globalSearchInput.contains(e.target) && !globalSearchResults.contains(e.target)) {
+                globalSearchResults.style.display = 'none';
+            }
+        });
+    }
+});
+
+function viewTermFromGlobalSearch(term) {
+    document.getElementById('globalSearchResults').style.display = 'none';
+    document.getElementById('globalSearchInput').value = '';
+    viewTerm(term);
+}
+// Text-to-Speech functionality using Web Speech API
+let currentSpeech = null;
+let isPaused = false;
+
+function speakText(text, buttonId) {
+    // Stop any current speech
+    if (currentSpeech) {
+        window.speechSynthesis.cancel();
+        currentSpeech = null;
+        updateAllReadButtons();
+        return;
+    }
+    
+    // Create new speech
+    currentSpeech = new SpeechSynthesisUtterance(text);
+    currentSpeech.rate = 0.85; // Slower for students
+    currentSpeech.pitch = 1.0;
+    currentSpeech.volume = 1.0;
+    
+    // Update button to show stop icon
+    const btn = document.getElementById(buttonId);
+    if (btn) {
+        btn.innerHTML = '⏸️ Stop';
+        btn.style.background = '#ef4444';
+    }
+    
+    // Handle completion
+    currentSpeech.onend = () => {
+        currentSpeech = null;
+        isPaused = false;
+        updateAllReadButtons();
+    };
+    
+    // Handle errors
+    currentSpeech.onerror = () => {
+        currentSpeech = null;
+        isPaused = false;
+        updateAllReadButtons();
+        showNotification('❌ Speech failed - try again');
+    };
+    
+    // Start speaking
+    window.speechSynthesis.speak(currentSpeech);
+}
+
+function updateAllReadButtons() {
+    const buttons = document.querySelectorAll('.read-aloud-btn');
+    buttons.forEach(btn => {
+        btn.innerHTML = '🔊 Read Aloud';
+        btn.style.background = '#667eea';
+    });
 }

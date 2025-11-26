@@ -788,17 +788,6 @@ def add_recent_term():
             VALUES (?, ?, ?, ?)
         """, (user_id, term, subject, now_iso()))
         
-        # Keep only last 50 recent terms (auto-cleanup)
-        cur.execute("""
-            DELETE FROM user_recent_terms 
-            WHERE user_id = ? 
-            AND id NOT IN (
-                SELECT id FROM user_recent_terms 
-                WHERE user_id = ? 
-                ORDER BY viewed_at DESC 
-                LIMIT 50
-            )
-        """, (user_id, user_id))
         
         db.commit()
         
